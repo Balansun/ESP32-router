@@ -1,0 +1,107 @@
+{
+  "backupSchemaVersion": 1,
+  "exportedAt": "2026-05-19T13:57:49.753Z",
+  "config": {
+    "dhcp_on": true,
+    "ip_fixed": "0.0.0.0",
+    "gateway": "0.0.0.0",
+    "subnet_mask": "255.255.255.0",
+    "dns": "0.0.0.0",
+    "source": "JsyMk194",
+    "ext_peer_ip": "0.0.0.0",
+    "ext_peer_port": 80,
+    "ext_peer_path": "/api/v1/measurements",
+    "ext_protocol": "json",
+    "enphase_user": "",
+    "enphase_password": "",
+    "enphase_serial": "",
+    "meter_channel": "",
+    "mqtt_repeat_sec": 0,
+    "mqtt_ip": "0.0.0.0",
+    "mqtt_port": 1883,
+    "mqtt_user": "",
+    "mqtt_password": "",
+    "mqtt_prefix": "balansun",
+    "mqtt_device_name": "",
+    "router_name": "Balansun Test",
+    "probe_second_name": "",
+    "probe_house_name": "",
+    "temperature_label": "",
+    "calib_u": 1000,
+    "calib_i": 1000,
+    "pmqtt_topic": "",
+    "pmqtt_schema": "",
+    "jsy_mk333_serial_baud": 9600,
+    "install_country": "FR",
+    "install_country_variant": "",
+    "mains_nominal_v": 230,
+    "mains_frequency_mode": "auto",
+    "mains_frequency_hz_manual": 50,
+    "triac_override_max_temp_c": 0,
+    "http_cors_enabled": false,
+    "pwm_gpio": -1,
+    "pwm_mode": "off",
+    "pwm_duty_percent": 0,
+    "pwm_inverted": false,
+    "status_led_mode": "dual_gpio",
+    "status_led_gpio_activity": 18,
+    "status_led_gpio_regulation": 19,
+    "status_led_rgb_gpio": -1,
+    "status_led_active_low": false,
+    "status_led_color_activity": [255, 180, 0],
+    "status_led_color_regulation": [0, 255, 0],
+    "status_led_color_reboot": [255, 0, 0],
+    "status_led_color_ap": [102, 0, 255],
+    "tempo_rte_enabled": false,
+    "expert_regulation_mode": 0,
+    "regulation_gain": 1,
+    "triac_cal_enabled": false,
+    "triac_calibration": [
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      },
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      },
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      }
+    ],
+    "hunting_reversal_threshold": 3,
+    "hunting_window_min": 2,
+    "vacation_enabled": false,
+    "vacation_end_epoch": 0,
+    "max_routed_w": 0,
+    "mqtt_json_commands": false,
+    "triac_off_when_source_stale": false,
+    "triac_backoff_when_heater_idle": false,
+    "action_daily_cap_wh": []
+  },
+  "actions": {
+    "schema_version": 4,
+    "nb_actions": 1,
+    "actions": [
+      {
+        "index": 0,
+        "title": "Tank",
+        "kind": "triac",
+        "repeat_sec": 0,
+        "tempo_sec": 0,
+        "regulation_mode": 1,
+        "periods": []
+      }
+    ]
+  },
+  "time": {
+    "tz": "CET-1CEST",
+    "ntp1": "pool.ntp.org",
+    "ntp2": "time.google.com"
+  },
+  "wifi": {
+    "ssid": "home-wifi",
+    "password": "wpa-secret"
+  }
+}

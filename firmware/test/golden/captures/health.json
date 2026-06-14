@@ -1,0 +1,35 @@
+{
+  "ok": true,
+  "uptime_s": 1,
+  "telemetry_ready": false,
+  "source_ok": false,
+  "date_valid": false,
+  "mqtt_connected": false,
+  "free_heap": 100000,
+  "wifi_connected": true,
+  "pin_map_fallback_active": false,
+  "pin_map_reboot_pending": false,
+  "device_lifecycle": "booting",
+  "product_profile": "full_router",
+  "output_suspend": { "active": false, "reason": "none" },
+  "safety_lockout": { "active": false, "reasons": [] },
+  "self_test": {
+    "pending": false,
+    "skipped": false,
+    "running": false,
+    "last_run_epoch": 0,
+    "results": {
+      "zc_ok": false,
+      "triac_ok": false,
+      "source_ok": false,
+      "zc_edges_per_sec": 0
+    },
+    "severity": {
+      "zc": "critical",
+      "triac": "critical",
+      "source": "warning"
+    },
+    "safety_lockout_active": false,
+    "safety_lockout_reasons": []
+  }
+}

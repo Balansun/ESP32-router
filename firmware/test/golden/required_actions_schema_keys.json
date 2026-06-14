@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/actions/schema",
+  "required_keys": ["schema_version", "max_actions", "period_modes"]
+}

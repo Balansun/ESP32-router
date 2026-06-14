@@ -1,0 +1,698 @@
+{
+  "meta": {
+    "ci_stride": 8
+  },
+  "action_schedule": {
+    "period_count": 1,
+    "periods": [
+      {
+        "type": 4,
+        "period_start": 0,
+        "period_end": 2400,
+        "vmin": 0,
+        "vmax": 80,
+        "tinf": 101,
+        "tsup": 101
+      }
+    ]
+  },
+  "regulation": {
+    "loop_gain": 4,
+    "triac_max_percent": 80,
+    "actif": 1
+  },
+  "slots": [
+    {
+      "wall_decihours": 0,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 25,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 50,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 75,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 100,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 125,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 150,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 175,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 200,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 225,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 250,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 275,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 300,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 325,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 350,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 375,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 400,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 425,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 450,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 475,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 500,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 525,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 550,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 575,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 600,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 625,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 650,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 675,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 700,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 725,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 750,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 775,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 800,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 825,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 850,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 875,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 900,
+      "active_import_w": 100,
+      "active_export_w": 600,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 925,
+      "active_import_w": 100,
+      "active_export_w": 1541,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 950,
+      "active_import_w": 100,
+      "active_export_w": 1991,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 975,
+      "active_import_w": 100,
+      "active_export_w": 1740,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1000,
+      "active_import_w": 100,
+      "active_export_w": 906,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1025,
+      "active_import_w": 100,
+      "active_export_w": 1119,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1050,
+      "active_import_w": 100,
+      "active_export_w": 1853,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1075,
+      "active_import_w": 100,
+      "active_export_w": 1951,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1100,
+      "active_import_w": 100,
+      "active_export_w": 1366,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1125,
+      "active_import_w": 100,
+      "active_export_w": 625,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1150,
+      "active_import_w": 100,
+      "active_export_w": 1559,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1175,
+      "active_import_w": 100,
+      "active_export_w": 1994,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1200,
+      "active_import_w": 100,
+      "active_export_w": 1726,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1225,
+      "active_import_w": 100,
+      "active_export_w": 882,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1250,
+      "active_import_w": 100,
+      "active_export_w": 1142,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1275,
+      "active_import_w": 100,
+      "active_export_w": 1864,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1300,
+      "active_import_w": 100,
+      "active_export_w": 1944,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1325,
+      "active_import_w": 100,
+      "active_export_w": 1345,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1350,
+      "active_import_w": 100,
+      "active_export_w": 651,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1375,
+      "active_import_w": 100,
+      "active_export_w": 1576,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1400,
+      "active_import_w": 100,
+      "active_export_w": 1996,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1425,
+      "active_import_w": 100,
+      "active_export_w": 1711,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1450,
+      "active_import_w": 100,
+      "active_export_w": 857,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1475,
+      "active_import_w": 100,
+      "active_export_w": 1164,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1500,
+      "active_import_w": 100,
+      "active_export_w": 1874,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1525,
+      "active_import_w": 100,
+      "active_export_w": 1938,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1550,
+      "active_import_w": 100,
+      "active_export_w": 1324,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1575,
+      "active_import_w": 100,
+      "active_export_w": 676,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1600,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1625,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1650,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1675,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1700,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1725,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1750,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1775,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1800,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1825,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1850,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1875,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1900,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1925,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1950,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 1975,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2000,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2025,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2050,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2075,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2100,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2125,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2150,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2175,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2200,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2225,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2250,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2275,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2300,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2325,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2350,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    },
+    {
+      "wall_decihours": 2375,
+      "active_import_w": 500,
+      "active_export_w": 0,
+      "temperature_c": 40.0,
+      "loops": 10
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "supported": ["Analog", "JsyMk194", "Linky"],
+  "current": "JsyMk194",
+  "current_data": "JsyMk194"
+}

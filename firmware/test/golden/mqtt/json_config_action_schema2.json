@@ -1,0 +1,11 @@
+{
+  "description": "MQTT action_1/config/set payload (schema_version 2)",
+  "topic_suffix": "action_1/config/set",
+  "example": {
+    "schema_version": 2,
+    "hour_end": 2400,
+    "power_min_w": 800,
+    "power_max_w": 3500,
+    "mode": "power"
+  }
+}

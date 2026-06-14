@@ -1,0 +1,14 @@
+{
+  "house": {
+    "active_import_w": 0,
+    "active_export_w": 0,
+    "apparent_import_va": 0,
+    "apparent_export_va": 0,
+    "energy_day_import_wh": 0,
+    "energy_day_export_wh": 0,
+    "energy_total_import_wh": 0,
+    "energy_total_export_wh": 0
+  },
+  "second": {},
+  "raw_meter": {}
+}

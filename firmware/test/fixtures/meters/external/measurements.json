@@ -1,0 +1,19 @@
+{
+  "date_valid": true,
+  "date": "2026-05-17 12:00:00",
+  "source": "JsyMk194",
+  "house": {
+    "active_import_w": 150,
+    "active_export_w": 80,
+    "apparent_import_va": 160,
+    "apparent_export_va": 85,
+    "energy_day_import_wh": 1200,
+    "energy_day_export_wh": 400,
+    "energy_total_import_wh": 50000,
+    "energy_total_export_wh": 12000
+  },
+  "second": {
+    "active_import_w": 900,
+    "active_export_w": 0
+  }
+}

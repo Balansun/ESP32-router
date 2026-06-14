@@ -1,0 +1,4 @@
+{
+  "description": "Error envelope for 4xx/5xx JSON responses",
+  "required_keys": ["error", "message"]
+}

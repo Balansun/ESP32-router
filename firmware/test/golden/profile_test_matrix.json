@@ -1,0 +1,953 @@
+{
+  "version": 1,
+  "variants": [
+    {
+      "pio_env": "jsy_mk194_router",
+      "pack_id": "jsy_mk194",
+      "role": "meter_router",
+      "product_profile": "jsy_mk194_router",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "jsy_mk194_meter",
+      "pack_id": "jsy_mk194",
+      "role": "meter_gateway",
+      "product_profile": "jsy_mk194_meter",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "jsy_mk333_router",
+      "pack_id": "jsy_mk333",
+      "role": "meter_router",
+      "product_profile": "jsy_mk333_router",
+      "meters": [
+        "JsyMk333"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "jsy_mk333_meter",
+      "pack_id": "jsy_mk333",
+      "role": "meter_gateway",
+      "product_profile": "jsy_mk333_meter",
+      "meters": [
+        "JsyMk333"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "analog_router",
+      "pack_id": "analog",
+      "role": "meter_router",
+      "product_profile": "analog_router",
+      "meters": [
+        "Analog"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "analog_meter",
+      "pack_id": "analog",
+      "role": "meter_gateway",
+      "product_profile": "analog_meter",
+      "meters": [
+        "Analog"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "linky_router",
+      "pack_id": "linky",
+      "role": "meter_router",
+      "product_profile": "linky_router",
+      "meters": [
+        "Linky"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "linky_meter",
+      "pack_id": "linky",
+      "role": "meter_gateway",
+      "product_profile": "linky_meter",
+      "meters": [
+        "Linky"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "enphase_router",
+      "pack_id": "enphase",
+      "role": "meter_router",
+      "product_profile": "enphase_router",
+      "meters": [
+        "Enphase"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "enphase_meter",
+      "pack_id": "enphase",
+      "role": "meter_gateway",
+      "product_profile": "enphase_meter",
+      "meters": [
+        "Enphase"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "shelly_em_router",
+      "pack_id": "shelly_em",
+      "role": "meter_router",
+      "product_profile": "shelly_em_router",
+      "meters": [
+        "ShellyEm"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "shelly_em_meter",
+      "pack_id": "shelly_em",
+      "role": "meter_gateway",
+      "product_profile": "shelly_em_meter",
+      "meters": [
+        "ShellyEm"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "shelly_pro_router",
+      "pack_id": "shelly_pro",
+      "role": "meter_router",
+      "product_profile": "shelly_pro_router",
+      "meters": [
+        "ShellyPro"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "shelly_pro_meter",
+      "pack_id": "shelly_pro",
+      "role": "meter_gateway",
+      "product_profile": "shelly_pro_meter",
+      "meters": [
+        "ShellyPro"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "smartg_router",
+      "pack_id": "smartg",
+      "role": "meter_router",
+      "product_profile": "smartg_router",
+      "meters": [
+        "SmartG"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "smartg_meter",
+      "pack_id": "smartg",
+      "role": "meter_gateway",
+      "product_profile": "smartg_meter",
+      "meters": [
+        "SmartG"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "homew_router",
+      "pack_id": "homew",
+      "role": "meter_router",
+      "product_profile": "homew_router",
+      "meters": [
+        "HomeW"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "homew_meter",
+      "pack_id": "homew",
+      "role": "meter_gateway",
+      "product_profile": "homew_meter",
+      "meters": [
+        "HomeW"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "pmqtt_router",
+      "pack_id": "pmqtt",
+      "role": "meter_router",
+      "product_profile": "pmqtt_router",
+      "meters": [
+        "Pmqtt"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "pmqtt_meter",
+      "pack_id": "pmqtt",
+      "role": "meter_gateway",
+      "product_profile": "pmqtt_meter",
+      "meters": [
+        "Pmqtt"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "balansun_peer_router",
+      "pack_id": "balansun_peer",
+      "role": "meter_router",
+      "product_profile": "balansun_peer_router",
+      "meters": [
+        "BalansunPeer"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "balansun_peer_meter",
+      "pack_id": "balansun_peer",
+      "role": "meter_gateway",
+      "product_profile": "balansun_peer_meter",
+      "meters": [
+        "BalansunPeer"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "esp32_32u_jsy_router",
+      "pack_id": "jsy_mk194",
+      "role": "meter_router",
+      "product_profile": "jsy_mk194_router",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "esp32_32u",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "router_api",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "esp32_32u_jsy_meter",
+      "pack_id": "jsy_mk194",
+      "role": "meter_gateway",
+      "product_profile": "jsy_mk194_meter",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "esp32_32u",
+      "caps": {
+        "surplus_regulation": false,
+        "triac": false,
+        "multi_action": false,
+        "source_test_inject": false
+      },
+      "hil_suite": "caps",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": false
+      }
+    },
+    {
+      "pio_env": "wroom32",
+      "pack_id": "full",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194",
+        "JsyMk333",
+        "Analog",
+        "Linky",
+        "Enphase",
+        "ShellyEm",
+        "ShellyPro",
+        "SmartG",
+        "HomeW",
+        "Pmqtt",
+        "BalansunPeer"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": false,
+        "show_measurement_source": true,
+        "show_advanced_meter_sources": true,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "esp32s3",
+      "pack_id": "full",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194",
+        "JsyMk333",
+        "Analog",
+        "Linky",
+        "Enphase",
+        "ShellyEm",
+        "ShellyPro",
+        "SmartG",
+        "HomeW",
+        "Pmqtt",
+        "BalansunPeer"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": false,
+        "show_measurement_source": true,
+        "show_advanced_meter_sources": true,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "hil",
+      "pack_id": "full",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194",
+        "JsyMk333",
+        "Analog",
+        "Linky",
+        "Enphase",
+        "ShellyEm",
+        "ShellyPro",
+        "SmartG",
+        "HomeW",
+        "Pmqtt",
+        "BalansunPeer"
+      ],
+      "board_profile": "generic",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": false,
+        "show_measurement_source": true,
+        "show_advanced_meter_sources": true,
+        "show_follow_triac_pwm_option": true
+      }
+    }
+  ],
+  "router_envs": [
+    "analog_router",
+    "balansun_peer_router",
+    "enphase_router",
+    "esp32_32u_jsy_router",
+    "homew_router",
+    "jsy_mk194_router",
+    "jsy_mk333_router",
+    "linky_router",
+    "pmqtt_router",
+    "shelly_em_router",
+    "shelly_pro_router",
+    "smartg_router",
+    "hil"
+  ],
+  "meter_pack_envs": [
+    "analog_meter",
+    "analog_router",
+    "balansun_peer_meter",
+    "balansun_peer_router",
+    "enphase_meter",
+    "enphase_router",
+    "esp32_32u_jsy_meter",
+    "esp32_32u_jsy_router",
+    "homew_meter",
+    "homew_router",
+    "jsy_mk194_meter",
+    "jsy_mk194_router",
+    "jsy_mk333_meter",
+    "jsy_mk333_router",
+    "linky_meter",
+    "linky_router",
+    "pmqtt_meter",
+    "pmqtt_router",
+    "shelly_em_meter",
+    "shelly_em_router",
+    "shelly_pro_meter",
+    "shelly_pro_router",
+    "smartg_meter",
+    "smartg_router"
+  ],
+  "full_envs": [
+    "wroom32",
+    "esp32s3",
+    "hil"
+  ],
+  "all_variant_envs": [
+    "analog_meter",
+    "analog_router",
+    "balansun_peer_meter",
+    "balansun_peer_router",
+    "enphase_meter",
+    "enphase_router",
+    "esp32_32u_jsy_meter",
+    "esp32_32u_jsy_router",
+    "esp32s3",
+    "hil",
+    "homew_meter",
+    "homew_router",
+    "jsy_mk194_meter",
+    "jsy_mk194_router",
+    "jsy_mk333_meter",
+    "jsy_mk333_router",
+    "linky_meter",
+    "linky_router",
+    "pmqtt_meter",
+    "pmqtt_router",
+    "shelly_em_meter",
+    "shelly_em_router",
+    "shelly_pro_meter",
+    "shelly_pro_router",
+    "smartg_meter",
+    "smartg_router",
+    "wroom32"
+  ],
+  "firmware_catalog": {
+    "version": 1,
+    "families": [
+      {
+        "id": "meter",
+        "label_fr": "Compteur",
+        "label_en": "Meter gateway"
+      },
+      {
+        "id": "router",
+        "label_fr": "Routeur",
+        "label_en": "Router"
+      },
+      {
+        "id": "full",
+        "label_fr": "Routeur complet",
+        "label_en": "Full router"
+      }
+    ],
+    "entries": [
+      {
+        "family": "meter",
+        "declination_id": "jsy_mk194",
+        "label_fr": "JSY-MK-194",
+        "label_en": "JSY-MK-194",
+        "pio_env": "jsy_mk194_meter",
+        "product_profile": "jsy_mk194_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "jsy_mk194",
+        "label_fr": "JSY-MK-194",
+        "label_en": "JSY-MK-194",
+        "pio_env": "jsy_mk194_router",
+        "product_profile": "jsy_mk194_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "jsy_mk333",
+        "label_fr": "JSY-MK-333",
+        "label_en": "JSY-MK-333",
+        "pio_env": "jsy_mk333_meter",
+        "product_profile": "jsy_mk333_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "jsy_mk333",
+        "label_fr": "JSY-MK-333",
+        "label_en": "JSY-MK-333",
+        "pio_env": "jsy_mk333_router",
+        "product_profile": "jsy_mk333_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "analog",
+        "label_fr": "Sonde U/I analogique",
+        "label_en": "Analog U/I probe",
+        "pio_env": "analog_meter",
+        "product_profile": "analog_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "analog",
+        "label_fr": "Sonde U/I analogique",
+        "label_en": "Analog U/I probe",
+        "pio_env": "analog_router",
+        "product_profile": "analog_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "linky",
+        "label_fr": "Linky TIC",
+        "label_en": "Linky TIC",
+        "pio_env": "linky_meter",
+        "product_profile": "linky_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "linky",
+        "label_fr": "Linky TIC",
+        "label_en": "Linky TIC",
+        "pio_env": "linky_router",
+        "product_profile": "linky_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "enphase",
+        "label_fr": "Enphase Envoy",
+        "label_en": "Enphase Envoy",
+        "pio_env": "enphase_meter",
+        "product_profile": "enphase_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "enphase",
+        "label_fr": "Enphase Envoy",
+        "label_en": "Enphase Envoy",
+        "pio_env": "enphase_router",
+        "product_profile": "enphase_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "shelly_em",
+        "label_fr": "Shelly EM",
+        "label_en": "Shelly EM",
+        "pio_env": "shelly_em_meter",
+        "product_profile": "shelly_em_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "shelly_em",
+        "label_fr": "Shelly EM",
+        "label_en": "Shelly EM",
+        "pio_env": "shelly_em_router",
+        "product_profile": "shelly_em_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "shelly_pro",
+        "label_fr": "Shelly Pro EM",
+        "label_en": "Shelly Pro EM",
+        "pio_env": "shelly_pro_meter",
+        "product_profile": "shelly_pro_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "shelly_pro",
+        "label_fr": "Shelly Pro EM",
+        "label_en": "Shelly Pro EM",
+        "pio_env": "shelly_pro_router",
+        "product_profile": "shelly_pro_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "smartg",
+        "label_fr": "Smart Gateway",
+        "label_en": "Smart Gateway",
+        "pio_env": "smartg_meter",
+        "product_profile": "smartg_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "smartg",
+        "label_fr": "Smart Gateway",
+        "label_en": "Smart Gateway",
+        "pio_env": "smartg_router",
+        "product_profile": "smartg_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "homew",
+        "label_fr": "HomeWizard",
+        "label_en": "HomeWizard",
+        "pio_env": "homew_meter",
+        "product_profile": "homew_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "homew",
+        "label_fr": "HomeWizard",
+        "label_en": "HomeWizard",
+        "pio_env": "homew_router",
+        "product_profile": "homew_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "pmqtt",
+        "label_fr": "Compteur MQTT",
+        "label_en": "MQTT meter",
+        "pio_env": "pmqtt_meter",
+        "product_profile": "pmqtt_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "pmqtt",
+        "label_fr": "Compteur MQTT",
+        "label_en": "MQTT meter",
+        "pio_env": "pmqtt_router",
+        "product_profile": "pmqtt_router"
+      },
+      {
+        "family": "meter",
+        "declination_id": "balansun_peer",
+        "label_fr": "Peer Balansun",
+        "label_en": "Balansun peer",
+        "pio_env": "balansun_peer_meter",
+        "product_profile": "balansun_peer_meter"
+      },
+      {
+        "family": "router",
+        "declination_id": "balansun_peer",
+        "label_fr": "Peer Balansun",
+        "label_en": "Balansun peer",
+        "pio_env": "balansun_peer_router",
+        "product_profile": "balansun_peer_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "wroom32",
+        "label_fr": "ESP32-WROOM32 (tous compteurs)",
+        "label_en": "ESP32-WROOM32 (all meters)",
+        "pio_env": "wroom32",
+        "product_profile": "full_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "esp32s3",
+        "label_fr": "ESP32-S3 (tous compteurs)",
+        "label_en": "ESP32-S3 (all meters)",
+        "pio_env": "esp32s3",
+        "product_profile": "full_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "hil",
+        "label_fr": "Labo HIL (tous compteurs)",
+        "label_en": "HIL lab (all meters)",
+        "pio_env": "hil",
+        "product_profile": "full_router"
+      }
+    ]
+  }
+}

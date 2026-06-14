@@ -1,0 +1,700 @@
+{
+  "meta": {
+    "description": "Synthetic summer weekday",
+    "sample_period_min": 15,
+    "ci_stride": 4
+  },
+  "action_schedule": {
+    "period_count": 1,
+    "periods": [
+      {
+        "type": 4,
+        "period_start": 0,
+        "period_end": 2400,
+        "vmin": 0,
+        "vmax": 80,
+        "tinf": 101,
+        "tsup": 101
+      }
+    ]
+  },
+  "regulation": {
+    "loop_gain": 4,
+    "triac_max_percent": 80,
+    "actif": 1
+  },
+  "slots": [
+    {
+      "wall_decihours": 0,
+      "active_import_w": 800,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 25,
+      "active_import_w": 850,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 50,
+      "active_import_w": 900,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 75,
+      "active_import_w": 950,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 100,
+      "active_import_w": 1000,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 125,
+      "active_import_w": 800,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 150,
+      "active_import_w": 850,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 175,
+      "active_import_w": 900,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 200,
+      "active_import_w": 950,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 225,
+      "active_import_w": 1000,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 250,
+      "active_import_w": 800,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 275,
+      "active_import_w": 850,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 300,
+      "active_import_w": 900,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 325,
+      "active_import_w": 950,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 350,
+      "active_import_w": 1000,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 375,
+      "active_import_w": 800,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 400,
+      "active_import_w": 850,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 425,
+      "active_import_w": 900,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 450,
+      "active_import_w": 950,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 475,
+      "active_import_w": 1000,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 500,
+      "active_import_w": 800,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 525,
+      "active_import_w": 850,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 550,
+      "active_import_w": 900,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 575,
+      "active_import_w": 950,
+      "active_export_w": 0,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 600,
+      "active_import_w": 400,
+      "active_export_w": 400,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 625,
+      "active_import_w": 400,
+      "active_export_w": 400,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 650,
+      "active_import_w": 400,
+      "active_export_w": 400,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 675,
+      "active_import_w": 400,
+      "active_export_w": 400,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 700,
+      "active_import_w": 300,
+      "active_export_w": 800,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 725,
+      "active_import_w": 300,
+      "active_export_w": 800,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 750,
+      "active_import_w": 300,
+      "active_export_w": 800,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 775,
+      "active_import_w": 300,
+      "active_export_w": 800,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 800,
+      "active_import_w": 200,
+      "active_export_w": 1200,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 825,
+      "active_import_w": 200,
+      "active_export_w": 1200,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 850,
+      "active_import_w": 200,
+      "active_export_w": 1200,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 875,
+      "active_import_w": 200,
+      "active_export_w": 1200,
+      "temperature_c": 35.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 900,
+      "active_import_w": 100,
+      "active_export_w": 1600,
+      "temperature_c": 37.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 925,
+      "active_import_w": 100,
+      "active_export_w": 1600,
+      "temperature_c": 37.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 950,
+      "active_import_w": 100,
+      "active_export_w": 1600,
+      "temperature_c": 37.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 975,
+      "active_import_w": 100,
+      "active_export_w": 1600,
+      "temperature_c": 37.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1000,
+      "active_import_w": 70,
+      "active_export_w": 2000,
+      "temperature_c": 40.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1025,
+      "active_import_w": 90,
+      "active_export_w": 2000,
+      "temperature_c": 40.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1050,
+      "active_import_w": 50,
+      "active_export_w": 2000,
+      "temperature_c": 40.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1075,
+      "active_import_w": 70,
+      "active_export_w": 2000,
+      "temperature_c": 40.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1100,
+      "active_import_w": 90,
+      "active_export_w": 2399,
+      "temperature_c": 42.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1125,
+      "active_import_w": 50,
+      "active_export_w": 2399,
+      "temperature_c": 42.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1150,
+      "active_import_w": 70,
+      "active_export_w": 2399,
+      "temperature_c": 42.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1175,
+      "active_import_w": 90,
+      "active_export_w": 2399,
+      "temperature_c": 42.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1200,
+      "active_import_w": 50,
+      "active_export_w": 2692,
+      "temperature_c": 45.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1225,
+      "active_import_w": 70,
+      "active_export_w": 2692,
+      "temperature_c": 45.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1250,
+      "active_import_w": 90,
+      "active_export_w": 2692,
+      "temperature_c": 45.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1275,
+      "active_import_w": 50,
+      "active_export_w": 2692,
+      "temperature_c": 45.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1300,
+      "active_import_w": 70,
+      "active_export_w": 2800,
+      "temperature_c": 47.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1325,
+      "active_import_w": 90,
+      "active_export_w": 2800,
+      "temperature_c": 47.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1350,
+      "active_import_w": 50,
+      "active_export_w": 2800,
+      "temperature_c": 47.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1375,
+      "active_import_w": 70,
+      "active_export_w": 2800,
+      "temperature_c": 47.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1400,
+      "active_import_w": 90,
+      "active_export_w": 2692,
+      "temperature_c": 50.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1425,
+      "active_import_w": 50,
+      "active_export_w": 2692,
+      "temperature_c": 50.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1450,
+      "active_import_w": 70,
+      "active_export_w": 2692,
+      "temperature_c": 50.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1475,
+      "active_import_w": 90,
+      "active_export_w": 2692,
+      "temperature_c": 50.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1500,
+      "active_import_w": 50,
+      "active_export_w": 2399,
+      "temperature_c": 52.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1525,
+      "active_import_w": 70,
+      "active_export_w": 2399,
+      "temperature_c": 52.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1550,
+      "active_import_w": 90,
+      "active_export_w": 2399,
+      "temperature_c": 52.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1575,
+      "active_import_w": 50,
+      "active_export_w": 2399,
+      "temperature_c": 52.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1600,
+      "active_import_w": 300,
+      "active_export_w": 1500,
+      "temperature_c": 55.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1625,
+      "active_import_w": 300,
+      "active_export_w": 1500,
+      "temperature_c": 55.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1650,
+      "active_import_w": 300,
+      "active_export_w": 1500,
+      "temperature_c": 55.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1675,
+      "active_import_w": 300,
+      "active_export_w": 1500,
+      "temperature_c": 55.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1700,
+      "active_import_w": 500,
+      "active_export_w": 1150,
+      "temperature_c": 57.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1725,
+      "active_import_w": 500,
+      "active_export_w": 1150,
+      "temperature_c": 57.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1750,
+      "active_import_w": 500,
+      "active_export_w": 1150,
+      "temperature_c": 57.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1775,
+      "active_import_w": 500,
+      "active_export_w": 1150,
+      "temperature_c": 57.5,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1800,
+      "active_import_w": 700,
+      "active_export_w": 800,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1825,
+      "active_import_w": 700,
+      "active_export_w": 800,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1850,
+      "active_import_w": 700,
+      "active_export_w": 800,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1875,
+      "active_import_w": 700,
+      "active_export_w": 800,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1900,
+      "active_import_w": 900,
+      "active_export_w": 450,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1925,
+      "active_import_w": 900,
+      "active_export_w": 450,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1950,
+      "active_import_w": 900,
+      "active_export_w": 450,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 1975,
+      "active_import_w": 900,
+      "active_export_w": 450,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2000,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2025,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2050,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2075,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2100,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2125,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2150,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2175,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2200,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2225,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2250,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2275,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2300,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2325,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2350,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    },
+    {
+      "wall_decihours": 2375,
+      "active_import_w": 600,
+      "active_export_w": 50,
+      "temperature_c": 60.0,
+      "loops": 15
+    }
+  ]
+}

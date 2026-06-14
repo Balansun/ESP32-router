@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "constants_source": "firmware/api/api_v1_common.h",
+  "entries": [
+    {"id": "put_config_body", "method": "PUT", "path": "/api/v1/config", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "patch_config_body", "method": "PATCH", "path": "/api/v1/config", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "patch_config_unknown_key", "method": "PATCH", "path": "/api/v1/config", "limit_type": "validation", "payload": {"not_a_real_config_key": 1}, "expect_status": 400, "expect_error": "unknown_key"},
+    {"id": "put_actions_config_body", "method": "PUT", "path": "/api/v1/actions/config", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "patch_actions_config_body", "method": "PATCH", "path": "/api/v1/actions/config", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_system_backup_body", "method": "PUT", "path": "/api/v1/system/backup", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_wifi_body", "method": "PUT", "path": "/api/v1/wifi", "limit_type": "body_bytes", "max": 512, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_time_body", "method": "PUT", "path": "/api/v1/time", "limit_type": "body_bytes", "max": 512, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_http_auth_body", "method": "PUT", "path": "/api/v1/system/http-auth", "limit_type": "body_bytes", "max": 128, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_arduino_ota_body", "method": "PUT", "path": "/api/v1/system/arduino-ota", "limit_type": "body_bytes", "max": 512, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "post_auth_login_body", "method": "POST", "path": "/api/v1/auth/login", "limit_type": "body_bytes", "max": 128, "over_status": 413, "over_error": "payload_too_large", "requires_auth_enabled": false},
+    {"id": "post_auth_tokens_body", "method": "POST", "path": "/api/v1/auth/tokens", "limit_type": "body_bytes", "max": 256, "over_status": 413, "over_error": "payload_too_large", "requires_auth_enabled": true},
+    {"id": "post_history_daily_import_body", "method": "POST", "path": "/api/v1/history/energy/daily/import", "limit_type": "body_bytes", "max": 32768, "over_status": 413, "over_error": "payload_too_large", "content_type": "text/csv"},
+    {"id": "post_fleet_import_body", "method": "POST", "path": "/api/v1/fleet/import", "limit_type": "body_bytes", "max": 16384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "post_inject_body", "method": "POST", "path": "/api/v1/sources/test/inject", "limit_type": "body_bytes", "max": 2048, "over_status": 413, "over_error": "payload_too_large", "hil_only": true},
+    {"id": "post_pmqtt_preview_body", "method": "POST", "path": "/api/v1/sources/pmqtt/preview", "limit_type": "body_bytes", "max": 4096, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "post_mqtt_test_body", "method": "POST", "path": "/api/v1/mqtt/test", "limit_type": "body_bytes", "max": 384, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "post_triac_override_body", "method": "POST", "path": "/api/v1/triac/override", "limit_type": "body_bytes", "max": 256, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "post_action_override_body", "method": "POST", "path": "/api/v1/actions/0/override", "limit_type": "body_bytes", "max": 256, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_gpio_body", "method": "PUT", "path": "/api/v1/gpio", "limit_type": "body_bytes", "max": 256, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_pwm_body", "method": "PUT", "path": "/api/v1/pwm", "limit_type": "body_bytes", "max": 512, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "put_fleet_trust_key_body", "method": "PUT", "path": "/api/v1/fleet/trust-key", "limit_type": "body_bytes", "max": 256, "over_status": 413, "over_error": "payload_too_large"},
+    {"id": "get_history_power_max_points", "method": "GET", "path": "/api/v1/history/power", "limit_type": "query_clamp", "query_param": "max_points", "max": 600, "expect_field": "max_points", "expect_value": 600},
+    {"id": "get_history_daily_limit", "method": "GET", "path": "/api/v1/history/energy/daily", "limit_type": "query_clamp", "query_param": "limit", "max": 10, "expect_field": "limit", "expect_value": 10}
+  ]
+}

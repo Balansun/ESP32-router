@@ -1,0 +1,11 @@
+{
+  "description": "MQTT topic shapes: HA discovery on homeassistant/, state and commands on telemetry prefix",
+  "discovery_prefix": "homeassistant",
+  "telemetry_prefix": "balansun",
+  "device": "BALANSUN_TEST",
+  "state_topic": "balansun/BALANSUN_TEST_state",
+  "availability_topic": "balansun/BALANSUN_TEST/availability",
+  "discovery_sensor_pw": "homeassistant/sensor/BALANSUN_TEST_Pw/config",
+  "command_triac": "balansun/BALANSUN_TEST/triac/set",
+  "sensor_discovery_name_pw": "BALANSUN_TEST Pw"
+}

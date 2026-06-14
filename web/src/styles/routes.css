@@ -1,0 +1,116 @@
+/* Route-specific styles */
+/* HTTP API login gate */
+.login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: calc(var(--space-4) + var(--safe-top)) var(--space-4)
+    calc(var(--space-4) + var(--safe-bottom));
+  gap: var(--space-4);
+  background: radial-gradient(
+    ellipse 80% 50% at 50% 0%,
+    color-mix(in oklab, var(--c-accent-soft) 80%, transparent),
+    var(--c-bg) 70%
+  );
+}
+.login-page__title {
+  margin: 0;
+  font-size: var(--fz-lg);
+  font-weight: var(--fw-bold);
+  text-align: center;
+  color: var(--c-fg);
+}
+.login-page__subtitle {
+  margin: 0;
+  font-size: var(--fz-sm);
+  color: var(--c-fg-muted);
+  text-align: center;
+  line-height: 1.4;
+}
+.login-page__toolbar {
+  position: fixed;
+  top: calc(var(--space-3) + var(--safe-top));
+  right: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  z-index: 10;
+}
+.login-page__card {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.login-page__logo {
+  align-self: center;
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+.login-page__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.login-page__form .btn--block {
+  width: 100%;
+}
+.login-page__error {
+  color: var(--c-danger);
+  font-size: var(--fz-sm);
+  text-align: center;
+}
+
+/* OTA / GitHub install progress */
+.ota-progress {
+  display: grid;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+}
+.ota-progress__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ota-progress__label {
+  flex: 1;
+}
+.inline-spinner {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--c-border);
+  border-top-color: var(--c-accent);
+  animation: spin 700ms linear infinite;
+}
+.progress {
+  position: relative;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--c-surface-2);
+  overflow: hidden;
+}
+.progress__bar {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--c-accent);
+  transition: width 200ms ease-out;
+}
+.progress--indeterminate .progress__bar {
+  width: 40% !important;
+  animation: progress-indeterminate 1.2s ease-in-out infinite;
+}
+@keyframes progress-indeterminate {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}

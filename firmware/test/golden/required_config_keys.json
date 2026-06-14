@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/config",
+  "required_keys": ["schema_version", "config"]
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 4,
+  "nb_actions": 1,
+  "actions": [
+    {
+      "index": 0,
+      "regulation_mode": 1,
+      "title": "HIL triac",
+      "kind": "triac",
+      "ki": 4,
+      "kp": 4,
+      "kd": 0,
+      "pid_enabled": false,
+      "repeat_sec": 0,
+      "tempo_sec": 0,
+      "periods": [
+        {
+          "mode": "power",
+          "hour_end": 2400,
+          "power_min_w": 0,
+          "power_max_w": 80,
+          "temp_inf_c": 101,
+          "temp_sup_c": 101
+        }
+      ]
+    }
+  ]
+}

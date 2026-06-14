@@ -1,0 +1,26 @@
+{
+  "schema_version": 5,
+  "config": {
+    "source": "JsyMk194",
+    "action_daily_cap_wh": [0, 0, 0],
+    "pin_triac_dim": 22,
+    "pin_zero_cross": 23,
+    "pin_uart_rx": 26,
+    "pin_uart_tx": 27,
+    "pin_temp": 13,
+    "pin_analog0": 35,
+    "pin_analog1": 32,
+    "pin_analog2": 33,
+    "pin_map_fallback_active": false,
+    "pin_map_reboot_pending": false,
+    "board_pin_profile": "wroom32",
+    "pin_default_triac_dim": 22,
+    "pin_default_zero_cross": 23,
+    "pin_default_uart_rx": 26,
+    "pin_default_uart_tx": 27,
+    "pin_default_temp": 13,
+    "pin_default_analog0": 35,
+    "pin_default_analog1": 32,
+    "pin_default_analog2": 33
+  }
+}

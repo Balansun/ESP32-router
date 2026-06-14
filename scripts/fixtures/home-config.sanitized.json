@@ -1,0 +1,265 @@
+{
+  "backupSchemaVersion": 1,
+  "exportedAt": "27/05/2026 09:02:16",
+  "config": {
+    "dhcp_on": true,
+    "ip_fixed": "0.0.0.0",
+    "gateway": "0.0.0.0",
+    "subnet_mask": "255.255.255.0",
+    "dns": "0.0.0.0",
+    "source": "Pmqtt",
+    "ext_peer_ip": "0.0.0.0",
+    "ext_peer_port": 80,
+    "ext_peer_path": "/api/v1/measurements",
+    "ext_protocol": "json",
+    "enphase_user": "",
+    "enphase_password": "",
+    "meter_channel": "0",
+    "enphase_serial": "0",
+    "mqtt_repeat_sec": 10,
+    "mqtt_ip": "192.168.1.101",
+    "mqtt_port": 1883,
+    "mqtt_user": "",
+    "mqtt_password": "",
+    "mqtt_prefix": "balansun",
+    "mqtt_device_name": "f81d5d470968",
+    "router_name": "Balansun",
+    "probe_second_name": "Second channel",
+    "probe_house_name": "House metering",
+    "temperature_label": "temperature_c",
+    "calib_u": 1000,
+    "calib_i": 1000,
+    "pmqtt_topic": "solar_router/solar_router_state",
+    "pmqtt_schema": "Pw,Pf",
+    "pmqtt_bindings": [
+      {
+        "metric": "house.active_import_w",
+        "path": "PuissanceS_M",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "house.active_export_w",
+        "path": "PuissanceI_M",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "house.energy_day_import_wh",
+        "path": "EnergieJour_M_Soutiree",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "house.energy_day_export_wh",
+        "path": "EnergieJour_M_Injectee",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "house.energy_total_import_wh",
+        "path": "Energie_M_Soutiree",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "house.energy_total_export_wh",
+        "path": "Energie_M_Injectee",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.voltage_house_v",
+        "path": "Tension_M",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.current_house_a",
+        "path": "Intensite_M",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.pf_house",
+        "path": "PowerFactor_M",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.active_import_w",
+        "path": "PuissanceS_T",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.active_export_w",
+        "path": "PuissanceI_T",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.energy_day_import_wh",
+        "path": "EnergieJour_T_Soutiree",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.energy_day_export_wh",
+        "path": "EnergieJour_T_Injectee",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.energy_total_import_wh",
+        "path": "Energie_T_Soutiree",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "second.energy_total_export_wh",
+        "path": "Energie_T_Injectee",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.voltage_second_v",
+        "path": "Tension_T",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.current_second_a",
+        "path": "Intensite_T",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.pf_second",
+        "path": "PowerFactor_T",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "raw_meter.freq_hz",
+        "path": "Frequence",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      },
+      {
+        "metric": "triac.open_percent",
+        "path": "OuvertureTriac",
+        "topic": "solar_router/solar_router_state",
+        "format": "json",
+        "enabled": true
+      }
+    ],
+    "jsy_mk333_serial_baud": 9600,
+    "install_country": "FR",
+    "install_country_variant": "",
+    "mains_nominal_v": 230,
+    "mains_frequency_mode": "auto",
+    "mains_frequency_hz_manual": 50,
+    "triac_override_max_temp_c": 70,
+    "http_cors_enabled": false,
+    "pwm_gpio": -1,
+    "pwm_mode": "off",
+    "pwm_duty_percent": 0,
+    "pwm_inverted": false,
+    "status_led_mode": "dual_gpio",
+    "status_led_gpio_activity": 18,
+    "status_led_gpio_regulation": 19,
+    "status_led_rgb_gpio": -1,
+    "status_led_active_low": false,
+    "status_led_color_activity": [255, 180, 0],
+    "status_led_color_regulation": [0, 255, 0],
+    "status_led_color_reboot": [255, 0, 0],
+    "status_led_color_ap": [102, 0, 255],
+    "tempo_rte_enabled": true,
+    "expert_regulation_mode": 0,
+    "regulation_gain": 1,
+    "triac_cal_enabled": false,
+    "triac_calibration": [
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      },
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      },
+      {
+        "duty_pct": 0,
+        "measured_w": 0
+      }
+    ],
+    "hunting_reversal_threshold": 8,
+    "hunting_window_min": 5,
+    "vacation_enabled": false,
+    "vacation_end_epoch": 0,
+    "max_routed_w": 0,
+    "mqtt_json_commands": false,
+    "triac_off_when_source_stale": true,
+    "triac_backoff_when_heater_idle": true,
+    "action_daily_cap_wh": [
+      0
+    ]
+  },
+  "actions": {
+    "schema_version": 4,
+    "nb_actions": 1,
+    "actions": [
+      {
+        "index": 0,
+        "regulation_mode": 1,
+        "title": "Triac",
+        "kind": "triac",
+        "triac_sensitivity": 17,
+        "ki": 17,
+        "kp": 0,
+        "kd": 0,
+        "pid_enabled": false,
+        "repeat_sec": 0,
+        "tempo_sec": 0,
+        "periods": [
+          {
+            "mode": "power",
+            "hour_end": 2400,
+            "power_min_w": 0,
+            "power_max_w": 100,
+            "temp_inf_c": 150,
+            "temp_sup_c": 150
+          }
+        ]
+      }
+    ]
+  },
+  "time": {
+    "tz": "Europe/Paris",
+    "ntp1": "fr.pool.ntp.org",
+    "ntp2": "time.nist.gov"
+  },
+  "wifi": {
+    "ssid": "GrimmChester",
+    "password": ""
+  }
+}

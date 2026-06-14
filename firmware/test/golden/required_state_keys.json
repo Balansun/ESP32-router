@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/state",
+  "required_keys": ["measurements", "actions_live", "triac_open_percent", "temperature_c", "time", "date_valid", "source", "status"]
+}

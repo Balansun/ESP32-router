@@ -1,0 +1,22 @@
+{
+  "summer_weekday": [
+    {
+      "slot_index": 4,
+      "triac_open_percent_min": 0,
+      "triac_open_percent_max": 15,
+      "schedule_active": true
+    },
+    {
+      "slot_index": 48,
+      "triac_open_percent_min": 10,
+      "triac_open_percent_max": 80,
+      "schedule_active": true
+    },
+    {
+      "slot_index": 80,
+      "triac_open_percent_min": 0,
+      "triac_open_percent_max": 40,
+      "schedule_active": true
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "error": "capability_disabled",
+  "message": "Surplus regulation is not available on this firmware profile",
+  "missing_cap": "surplus_regulation"
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Core keys on GET /api/v1/telemetry/snapshot (MQTT state parity)",
+  "required_keys": ["device_uid", "house_net_power_w", "triac_open_percent"]
+}

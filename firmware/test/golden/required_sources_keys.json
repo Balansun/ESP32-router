@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/sources",
+  "required_keys": ["supported", "current", "current_data"]
+}

@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/system",
+  "required_keys": ["uptime_hours", "wifi_rssi_dbm", "wifi_bssid", "eeprom_used_percent"]
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Balansun-Core",
+  "version": "0.1.4",
+  "description": "Host-testable Balansun domain logic (regulation helpers, triac math)",
+  "keywords": "balansun, triac",
+  "license": "EUPL-1.2",
+  "frameworks": "*",
+  "platforms": "*",
+  "headers": [
+    "balansun/heater_load_feedback.h",
+    "balansun/triac.h",
+    "balansun/triac_calibration.h",
+    "balansun/load_profile.h",
+    "balansun/product_caps.h",
+    "balansun/product_role.h",
+    "balansun/pilot_wire.h",
+    "balansun/pilot_wire_full.h",
+    "balansun/radiator_schedule.h",
+    "balansun/warm_actuator.h",
+    "balansun/action_node_control.h",
+    "balansun/action_node_manual.h",
+    "balansun/action_node_time.h",
+    "balansun/ds18_poll.h"
+  ]
+}

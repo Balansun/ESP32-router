@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="color-scheme" content="light dark" />
+    <meta
+      name="theme-color"
+      content="#f4f5f8"
+      media="(prefers-color-scheme: light)"
+    />
+    <meta
+      name="theme-color"
+      content="#0b1220"
+      media="(prefers-color-scheme: dark)"
+    />
+    <meta name="description" content="Balansun — embedded web interface" />
+    <!-- BALANSUN_PWA_HEAD -->
+    <meta name="balansun-ui-version" content="%VITE_FIRMWARE_VERSION%" />
+    <!-- /BALANSUN_PWA_HEAD -->
+    <title>Balansun</title>
+    <script>
+      (function () {
+        var loc = "en";
+        try {
+          var s = localStorage.getItem("solar.locale");
+          if (s === "fr" || s === "en") loc = s;
+          else if (navigator.language && navigator.language.toLowerCase().indexOf("fr") === 0)
+            loc = "fr";
+        } catch (e) {}
+        document.documentElement.lang = loc;
+        var boot = { en: "Loading…", fr: "Chargement…" };
+        document.addEventListener("DOMContentLoaded", function () {
+          var p = document.querySelector("#app .boot p");
+          if (p) p.textContent = boot[loc] || boot.en;
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="app" aria-busy="true">
+      <div class="boot">
+        <div class="boot__spinner" aria-hidden="true"></div>
+        <p>Loading…</p>
+      </div>
+    </div>
+    <script type="module" src="/src/boot.ts"></script>
+  </body>
+</html>

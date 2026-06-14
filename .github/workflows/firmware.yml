@@ -1,0 +1,336 @@
+name: Firmware
+
+on:
+  push:
+    branches: [main, master]
+    paths-ignore:
+      - "*.md"
+      - "**/*.md"
+  pull_request:
+    paths-ignore:
+      - "*.md"
+      - "**/*.md"
+
+jobs:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      code_changed: ${{ steps.code.outputs.changed }}
+      firmware: ${{ steps.filter.outputs.firmware }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Detect non-markdown changes
+        id: code
+        run: |
+          set -eu
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+            head="${{ github.event.pull_request.head.sha }}"
+          else
+            base="HEAD~1"
+            head="HEAD"
+          fi
+          if ! git rev-parse "${base}^{commit}" >/dev/null 2>&1; then
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          files="$(git diff --name-only "${base}" "${head}")"
+          if [ -z "$files" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          while IFS= read -r file; do
+            [ -z "$file" ] && continue
+            case "$file" in
+              *.md) ;;
+              *)
+                echo "changed=true" >> "$GITHUB_OUTPUT"
+                exit 0
+                ;;
+            esac
+          done <<< "$files"
+          echo "::notice::Markdown-only diff — skipping firmware CI and release."
+          echo "changed=false" >> "$GITHUB_OUTPUT"
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            firmware:
+              - 'firmware/**'
+              - 'lib/balansun-core/**'
+              - 'openapi/**'
+              - '.ci/**'
+              - 'scripts/**'
+              - 'platformio.ini'
+              - 'build_web.py'
+              - 'extra_scripts/**'
+              - 'assets/**'
+              - 'web/**'
+              - '.github/workflows/firmware.yml'
+              - '.github/workflows/release.yml'
+              - '!*.md'
+              - '!**/*.md'
+            web:
+              - 'web/**'
+              - 'openapi/**'
+              - 'firmware/test/golden/**'
+              - 'scripts/openapi_paths.py'
+              - 'scripts/check_firmware_golden.py'
+              - 'scripts/sync_openapi_snapshot.py'
+              - 'scripts/embed_openapi.py'
+              - 'scripts/check_openapi_drift.py'
+              - 'scripts/check_openapi_routes.py'
+              - 'scripts/sync-brand-assets.mjs'
+              - '.github/workflows/firmware.yml'
+              - '!*.md'
+              - '!**/*.md'
+
+  firmware-native:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true' && needs.changes.outputs.firmware == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PlatformIO and ripgrep
+        run: |
+          pip install 'platformio>=6.1'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ripgrep
+      - name: Generate profile matrix and firmware catalog
+        run: python3 scripts/generate_profile_test_matrix.py
+      - name: Host contract checks (naming, tokens, assets, native, goldens)
+        run: ./scripts/ci_host_checks.sh --skip-coverage
+      - name: Native logic coverage (>=95% lines/functions/regions/branches)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq gcovr
+          ./.ci/coverage_native.sh
+
+  firmware-build:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true' && needs.changes.outputs.firmware == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PlatformIO
+        run: pip install 'platformio>=6.1'
+      - name: Generate install country data
+        run: node scripts/generate-install-countries.mjs
+      - name: Generate profile matrix and firmware catalog
+        run: python3 scripts/generate_profile_test_matrix.py
+      - name: Install web deps
+        run: npm ci
+        working-directory: web
+      - name: Meter pack and profile matrix drift
+        run: |
+          python3 scripts/generate_meter_pack.py --check
+          python3 scripts/generate_profile_test_matrix.py --check
+          python3 scripts/check_profile_wire_drift.py
+      - name: Build all product variant firmware
+        env:
+          VITE_DOCS_SITE_ORIGIN: https://balansun.clouded.fr
+        run: |
+          pio platform install espressif32@6.4.0
+          rm -rf .pio
+          ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join('-e '+e for e in m['all_variant_envs']))")
+          # shellcheck disable=SC2086
+          pio run $ENVS
+      - name: Flash size gate (all wroom32-class variants)
+        run: ./scripts/check_variant_flash_sizes.sh
+      - name: Profile flash size delta (all router envs vs wroom32)
+        run: python3 scripts/check_firmware_size.py --routers-only
+      - name: Build ESP8266 action node firmware
+        run: |
+          pio platform install espressif8266
+          pio run -e action_esp8266_r2_3relay -e action_esp8266_r2_2relay
+      - name: Upload firmware catalog
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-catalog
+          path: web/public/firmware-catalog.json
+
+  web-contract:
+    needs: changes
+    if: needs.changes.outputs.code_changed == 'true' && needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Generate web data artifacts
+        run: |
+          node scripts/generate-install-countries.mjs
+          python3 scripts/generate_profile_test_matrix.py
+      - name: Typecheck and test with coverage
+        run: npm ci && npm run typecheck && npm run test:coverage
+        working-directory: web
+      - name: Golden device fixture
+        run: python3 scripts/check_firmware_golden.py firmware/test/golden/sample_device.json
+
+  # secrets cannot be referenced in job-level if: — gate via step env instead
+  hil-gate:
+    needs: [changes, firmware-native, firmware-build]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.changes.outputs.code_changed == 'true' &&
+      needs.changes.outputs.firmware == 'true' &&
+      (needs.firmware-native.result == 'success' || needs.firmware-native.result == 'skipped') &&
+      (needs.firmware-build.result == 'success' || needs.firmware-build.result == 'skipped') &&
+      needs.firmware-native.result != 'failure' &&
+      needs.firmware-build.result != 'failure'
+    runs-on: ubuntu-latest
+    outputs:
+      run_hil: ${{ steps.check.outputs.run_hil }}
+    steps:
+      - id: check
+        env:
+          HIL_URL: ${{ secrets.BALANSUN_HIL_URL }}
+        run: |
+          if [ -n "$HIL_URL" ]; then
+            echo "run_hil=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_hil=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  firmware-hil:
+    needs: [changes, firmware-native, firmware-build, hil-gate]
+    runs-on: [self-hosted, esp32-hil]
+    if: |
+      needs.hil-gate.outputs.run_hil == 'true' &&
+      needs.changes.outputs.code_changed == 'true' &&
+      needs.changes.outputs.firmware == 'true' &&
+      needs.firmware-native.result == 'success' &&
+      needs.firmware-build.result == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Python tools
+        run: pip install 'platformio>=6.1' -r firmware/test/hil/requirements.txt
+      - name: Flash HIL firmware
+        run: pio run -e hil -t upload
+      - name: Wait for device
+        env:
+          BALANSUN_HIL_URL: ${{ secrets.BALANSUN_HIL_URL }}
+          BALANSUN_HIL_WAIT_TELEMETRY: "1"
+        run: python3 firmware/test/hil/wait_for_device.py
+      - name: HIL pytest
+        env:
+          BALANSUN_HIL_URL: ${{ secrets.BALANSUN_HIL_URL }}
+          BALANSUN_HIL_USER: ${{ secrets.BALANSUN_HIL_USER }}
+          BALANSUN_HIL_PASSWORD: ${{ secrets.BALANSUN_HIL_PASSWORD }}
+          BALANSUN_HIL_REQUIRE_REGULATION: "1"
+        run: pytest firmware/test/hil -q
+
+  prerelease-gate:
+    needs: [changes, firmware-native, firmware-build, web-contract, firmware-hil]
+    if: |
+      always() &&
+      !cancelled() &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+    runs-on: ubuntu-latest
+    outputs:
+      should_publish: ${{ steps.eval.outputs.should_publish }}
+    steps:
+      - id: eval
+        name: Evaluate pre-release (paths + all jobs green)
+        run: |
+          set -eu
+          if [ "${{ needs.changes.outputs.code_changed }}" != "true" ]; then
+            echo "::notice::Pre-release skipped — markdown-only commit."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          publish_paths=false
+          if [ "${{ needs.changes.outputs.firmware }}" = "true" ] || [ "${{ needs.changes.outputs.web }}" = "true" ]; then
+            publish_paths=true
+          fi
+
+          check() {
+            name="$1"
+            result="$2"
+            case "$result" in
+              success|skipped) echo "OK: ${name} (${result})" ;;
+              *) echo "::error::${name} is ${result} — pre-release blocked until CI is green" >&2; return 1 ;;
+            esac
+          }
+
+          failed=0
+          check firmware-native "${{ needs.firmware-native.result }}" || failed=1
+          check firmware-build "${{ needs.firmware-build.result }}" || failed=1
+          check web-contract "${{ needs.web-contract.result }}" || failed=1
+          check firmware-hil "${{ needs.firmware-hil.result }}" || failed=1
+
+          if [ "$failed" -ne 0 ]; then
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
+          if [ "$publish_paths" != true ]; then
+            echo "::notice::Pre-release skipped — no firmware/web path changes in this commit."
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          echo "All required jobs green and path filter matched — publishing pre-release."
+
+  prerelease-tag:
+    needs: [prerelease-gate]
+    if: |
+      always() &&
+      !cancelled() &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.prerelease-gate.result == 'success' &&
+      needs.prerelease-gate.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute pre-release tag
+        id: tag
+        run: echo "tag_name=$(./.ci/ci_prerelease_tag.sh '${{ github.sha }}')" >> "$GITHUB_OUTPUT"
+
+  publish-prerelease:
+    needs: [prerelease-gate, prerelease-tag]
+    if: |
+      always() &&
+      !cancelled() &&
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.prerelease-gate.result == 'success' &&
+      needs.prerelease-gate.outputs.should_publish == 'true' &&
+      needs.prerelease-tag.result == 'success'
+    uses: ./.github/workflows/release.yml
+    permissions:
+      contents: write
+    with:
+      tag_name: ${{ needs.prerelease-tag.outputs.tag_name }}
+      prerelease: true
+      target_sha: ${{ github.sha }}
+    secrets: inherit

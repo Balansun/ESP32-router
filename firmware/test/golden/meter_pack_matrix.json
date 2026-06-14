@@ -1,0 +1,105 @@
+{
+  "version": 1,
+  "full_pack": "BALANSUN_METER_PACK_FULL",
+  "packs": [
+    {
+      "id": "jsy_mk194",
+      "pack_macro": "BALANSUN_METER_PACK_JSY_MK194",
+      "wire": "JsyMk194",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_JSY_MK194",
+      "env_router": "jsy_mk194_router",
+      "env_full_router": "jsy_mk194_full_router",
+      "env_meter": "jsy_mk194_meter"
+    },
+    {
+      "id": "jsy_mk333",
+      "pack_macro": "BALANSUN_METER_PACK_JSY_MK333",
+      "wire": "JsyMk333",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_JSY_MK333",
+      "env_router": "jsy_mk333_router",
+      "env_full_router": "jsy_mk333_full_router",
+      "env_meter": "jsy_mk333_meter"
+    },
+    {
+      "id": "analog",
+      "pack_macro": "BALANSUN_METER_PACK_ANALOG",
+      "wire": "Analog",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_ANALOG",
+      "env_router": "analog_router",
+      "env_full_router": "analog_full_router",
+      "env_meter": "analog_meter"
+    },
+    {
+      "id": "linky",
+      "pack_macro": "BALANSUN_METER_PACK_LINKY",
+      "wire": "Linky",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_LINKY",
+      "env_router": "linky_router",
+      "env_full_router": "linky_full_router",
+      "env_meter": "linky_meter"
+    },
+    {
+      "id": "enphase",
+      "pack_macro": "BALANSUN_METER_PACK_ENPHASE",
+      "wire": "Enphase",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_ENPHASE",
+      "env_router": "enphase_router",
+      "env_full_router": "enphase_full_router",
+      "env_meter": "enphase_meter"
+    },
+    {
+      "id": "shelly_em",
+      "pack_macro": "BALANSUN_METER_PACK_SHELLY_EM",
+      "wire": "ShellyEm",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SHELLY_EM",
+      "env_router": "shelly_em_router",
+      "env_full_router": "shelly_em_full_router",
+      "env_meter": "shelly_em_meter"
+    },
+    {
+      "id": "shelly_pro",
+      "pack_macro": "BALANSUN_METER_PACK_SHELLY_PRO",
+      "wire": "ShellyPro",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SHELLY_PRO",
+      "env_router": "shelly_pro_router",
+      "env_full_router": "shelly_pro_full_router",
+      "env_meter": "shelly_pro_meter"
+    },
+    {
+      "id": "smartg",
+      "pack_macro": "BALANSUN_METER_PACK_SMARTG",
+      "wire": "SmartG",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SMARTG",
+      "env_router": "smartg_router",
+      "env_full_router": "smartg_full_router",
+      "env_meter": "smartg_meter"
+    },
+    {
+      "id": "homew",
+      "pack_macro": "BALANSUN_METER_PACK_HOMEW",
+      "wire": "HomeW",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_HOMEW",
+      "env_router": "homew_router",
+      "env_full_router": "homew_full_router",
+      "env_meter": "homew_meter"
+    },
+    {
+      "id": "pmqtt",
+      "pack_macro": "BALANSUN_METER_PACK_PMqtt",
+      "wire": "Pmqtt",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_PMqtt",
+      "env_router": "pmqtt_router",
+      "env_full_router": "pmqtt_full_router",
+      "env_meter": "pmqtt_meter"
+    },
+    {
+      "id": "balansun_peer",
+      "pack_macro": "BALANSUN_METER_PACK_BALANSUN_PEER",
+      "wire": "BalansunPeer",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_EXT",
+      "env_router": "balansun_peer_router",
+      "env_full_router": "balansun_peer_full_router",
+      "env_meter": "balansun_peer_meter"
+    }
+  ]
+}

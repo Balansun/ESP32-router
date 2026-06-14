@@ -1,0 +1,8 @@
+{
+  "PowerDelivered_total": 1250,
+  "PowerReturned_total": 320,
+  "EnergyDeliveredTariff1": 12.5,
+  "EnergyDeliveredTariff2": 3.2,
+  "EnergyReturnedTariff1": 1.1,
+  "EnergyReturnedTariff2": 0.4
+}

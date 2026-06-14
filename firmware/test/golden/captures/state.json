@@ -1,0 +1,20 @@
+{
+  "measurements": { "house": {}, "second": {}, "raw_meter": {} },
+  "actions_live": { "active_slots": [] },
+  "triac_open_percent": 0,
+  "temperature_c": 20,
+  "time": "",
+  "date_valid": false,
+  "source": "JsyMk194",
+  "status": {
+    "source_health": 100,
+    "source_stale": false,
+    "regulation_active": false,
+    "site_cap_active": false,
+    "mqtt_connected": false,
+    "device_lifecycle": "booting",
+    "regulation_motion": "idle",
+    "output_suspend": { "active": false, "reason": "none" },
+    "triac_sync_state": "not_applicable"
+  }
+}

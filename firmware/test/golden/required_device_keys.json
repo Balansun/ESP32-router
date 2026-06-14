@@ -1,0 +1,20 @@
+{
+  "description": "Top-level keys expected on GET /api/v1/device (subset contract).",
+  "required_keys": [
+    "device_uid",
+    "source",
+    "source_data",
+    "router_name",
+    "firmware_version",
+    "probe_second_name",
+    "probe_house_name",
+    "ext_peer_ip",
+    "ext_peer_port",
+    "ext_peer_path",
+    "temperature_label",
+    "firmware",
+    "chip",
+    "capabilities"
+  ],
+  "expected_firmware_version": "0.1.0"
+}

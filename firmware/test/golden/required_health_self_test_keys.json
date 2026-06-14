@@ -1,0 +1,14 @@
+{
+  "description": "Nested keys on GET /api/v1/health self_test (router profiles)",
+  "parent": "self_test",
+  "required_keys": [
+    "pending",
+    "skipped",
+    "running",
+    "last_run_epoch",
+    "results",
+    "severity",
+    "safety_lockout_active",
+    "safety_lockout_reasons"
+  ]
+}

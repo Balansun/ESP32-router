@@ -1,0 +1,11 @@
+{
+  "description": "Full-day replay fixture schema",
+  "slot_fields": {
+    "wall_decihours": "int, same as wall_clock_decihours (hour*100 + minute*10/6)",
+    "active_import_w": "int watts",
+    "active_export_w": "int watts",
+    "temperature_c": "float tank temperature",
+    "loops": "int, count of 200ms regulation iterations per slot"
+  },
+  "files": ["summer_weekday.json", "winter_weekday.json", "cloudy_day.json"]
+}

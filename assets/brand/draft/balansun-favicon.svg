@@ -1,0 +1,13 @@
+<svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Balansun">
+  <title>Balansun</title>
+  <defs>
+    <linearGradient id="balansunFavGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#D97706;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="#0D9488" />
+  <circle cx="50" cy="50" r="25" fill="url(#balansunFavGrad)" />
+  <path d="M50 18 L50 28 M50 72 L50 82 M18 50 L28 50 M72 50 L82 50" stroke="#FCD34D" stroke-width="3" stroke-linecap="round" />
+  <rect x="40" y="48" width="20" height="4" rx="2" fill="#FFFFFF" />
+</svg>

@@ -1,0 +1,20 @@
+{
+  "description": "Top-level keys on GET /api/v1/health",
+  "required_keys": [
+    "ok",
+    "uptime_s",
+    "telemetry_ready",
+    "source_ok",
+    "date_valid",
+    "mqtt_connected",
+    "free_heap",
+    "wifi_connected",
+    "pin_map_fallback_active",
+    "pin_map_reboot_pending",
+    "device_lifecycle",
+    "product_profile",
+    "output_suspend",
+    "safety_lockout",
+    "self_test"
+  ]
+}

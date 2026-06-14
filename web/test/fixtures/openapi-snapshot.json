@@ -1,0 +1,5432 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Balansun API",
+    "version": "1.0",
+    "description": "REST JSON API for the Balansun ESP32 PV excess router firmware.\nServed on HTTP port 80 (STA or soft-AP). Keys use English `snake_case`.\nOptional Bearer auth when an API password is configured (`POST /api/v1/auth/login` for sessions,\n`POST /api/v1/auth/tokens` for permanent automation tokens);\nsee /en/http-api-security/. On-device `GET /api/v1/openapi.json` exposes\na compact path index only; this repository YAML is the full contract.\n"
+  },
+  "servers": [
+    {
+      "url": "http://{device}",
+      "description": "Device on LAN or setup AP (e.g. 192.168.4.1)",
+      "variables": {
+        "device": {
+          "default": "192.168.1.50"
+        }
+      }
+    }
+  ],
+  "tags": [
+    {
+      "name": "Telemetry",
+      "description": "Live measurements, state, and history"
+    },
+    {
+      "name": "Configuration",
+      "description": "Router settings, time, PWM"
+    },
+    {
+      "name": "Actions",
+      "description": "Routing actions config and overrides"
+    },
+    {
+      "name": "Sources",
+      "description": "Metering sources and diagnostics"
+    },
+    {
+      "name": "History",
+      "description": "Power and energy history"
+    },
+    {
+      "name": "GPIO",
+      "description": "GPIO read/write for live diagrams"
+    },
+    {
+      "name": "Network",
+      "description": "Wi-Fi setup and public bootstrap"
+    },
+    {
+      "name": "System",
+      "description": "Device info, health, reboot, EEPROM"
+    },
+    {
+      "name": "MQTT",
+      "description": "Home Assistant MQTT helpers"
+    },
+    {
+      "name": "Fleet",
+      "description": "Signed config export/import"
+    },
+    {
+      "name": "Lab",
+      "description": "HIL/lab-only endpoints (not in production OpenAPI embed)"
+    }
+  ],
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/measurements": {
+      "get": {
+        "tags": [
+          "Telemetry"
+        ],
+        "operationId": "getMeasurements",
+        "summary": "Current metering snapshot",
+        "description": "House incomer and optional second channel power/energy plus raw meter fields.",
+        "responses": {
+          "200": {
+            "description": "Measurements JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Measurements"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/tariff/tempo": {
+      "get": {
+        "tags": [
+          "Telemetry"
+        ],
+        "operationId": "getTariffTempo",
+        "summary": "EDF Tempo tariff status (RTE open data)",
+        "description": "Populated when `tempo_rte_enabled` is set in config.",
+        "responses": {
+          "200": {
+            "description": "Tempo fields",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TempoTariffStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/state": {
+      "get": {
+        "tags": [
+          "Telemetry"
+        ],
+        "operationId": "getState",
+        "summary": "Aggregated live state",
+        "description": "Measurements, actions live summary, triac percent, overrides, and clock.",
+        "responses": {
+          "200": {
+            "description": "State envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StateEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/telemetry/snapshot": {
+      "get": {
+        "tags": [
+          "Telemetry"
+        ],
+        "operationId": "getTelemetrySnapshot",
+        "summary": "MQTT Home Assistant state JSON equivalent",
+        "description": "Same key set as the MQTT `{prefix}/{device}_state` topic (capability-gated).\nUse for REST-only automations and HACS `rest_only` entity polling.\n",
+        "x-balansun-mqtt-parity": "info-retrieval",
+        "responses": {
+          "200": {
+            "description": "Telemetry snapshot object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/triac/override": {
+      "post": {
+        "tags": [
+          "Control"
+        ],
+        "operationId": "postTriacOverride",
+        "summary": "Set triac AUTO or fixed percent (MQTT triac/set parity)",
+        "x-balansun-mqtt-parity": "control",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TriacOverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Override applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Triac dimming not compiled on this profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorCapabilityDisabled"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/history/power": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "getHistoryPower",
+        "summary": "Power history time series",
+        "description": "`window=48h` (default) returns 5-minute buckets with temperature series.\n`window=10m` returns 2-second buckets with apparent VA arrays.\n",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/historyWindow"
+          },
+          {
+            "$ref": "#/components/parameters/historyMaxPoints"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "History arrays",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryPower"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/history/energy/daily": {
+      "get": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "getHistoryEnergyDaily",
+        "summary": "Daily energy deltas (year ring buffer)",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10,
+              "default": 10
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0
+            }
+          },
+          {
+            "name": "from_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          },
+          {
+            "name": "to_date",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daily Wh deltas",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryEnergyDaily"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/history/energy/daily/import": {
+      "post": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "postHistoryEnergyDailyImport",
+        "summary": "Import daily CH1/CH2 energy history from CSV",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Import applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          }
+        }
+      }
+    },
+    "/api/v1/history/reset": {
+      "post": {
+        "tags": [
+          "History"
+        ],
+        "operationId": "postHistoryReset",
+        "summary": "Clear consumption history and RAM buffers",
+        "description": "Clears EEPROM consumption history and in-memory power buffers.",
+        "responses": {
+          "200": {
+            "description": "History cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/config": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "getConfig",
+        "summary": "Full router configuration",
+        "responses": {
+          "200": {
+            "description": "Config envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "putConfig",
+        "summary": "Replace configuration (full PUT)",
+        "description": "Body must be a JSON object with a \"config\" property containing the full router settings. Persists to EEPROM.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfigPutBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "403": {
+            "description": "Config key targets a capability or meter not compiled on this profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorCapabilityDisabled"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "patchConfig",
+        "summary": "Partial configuration update",
+        "description": "Flat partial keys at the JSON root (not nested under `config`). Persists to EEPROM.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RouterConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "403": {
+            "description": "Config key targets a capability or meter not compiled on this profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorCapabilityDisabled"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/pwm": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "getPwm",
+        "summary": "PWM output status",
+        "responses": {
+          "200": {
+            "description": "PWM config and effective duty",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PwmStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "putPwm",
+        "summary": "Update PWM settings",
+        "description": "Partial update; persists to EEPROM and re-inits hardware.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PwmPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated PWM status",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PwmStatus"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/time": {
+      "get": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "getTime",
+        "summary": "Timezone and NTP settings",
+        "responses": {
+          "200": {
+            "description": "Time info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Configuration"
+        ],
+        "operationId": "putTime",
+        "summary": "Update timezone / NTP servers",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimePutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/actions": {
+      "get": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "getActionsLive",
+        "summary": "Live action slots (regulating actions only)",
+        "responses": {
+          "200": {
+            "description": "Actions live",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionsLive"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/actions/schema": {
+      "get": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "getActionsSchema",
+        "summary": "Action config schema metadata",
+        "responses": {
+          "200": {
+            "description": "Schema hints",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionsSchema"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/actions/config": {
+      "get": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "getActionsConfig",
+        "summary": "All action configurations",
+        "responses": {
+          "200": {
+            "description": "Actions config envelope",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionsConfigEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "putActionsConfig",
+        "summary": "Replace all action configurations",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionsConfigEnvelope"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "403": {
+            "description": "Surplus regulation not compiled on this profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorCapabilityDisabled"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "patchActionsConfig",
+        "summary": "Batch partial action config update",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/actions/config/{index}": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/actionIndex"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "getActionConfig",
+        "summary": "Single action configuration",
+        "responses": {
+          "200": {
+            "description": "One action config object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionConfig"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "putActionConfig",
+        "summary": "Replace one action configuration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionConfig"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "patchActionConfig",
+        "summary": "Partial update for one action",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/actions/{index}/override": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/actionIndex"
+        }
+      ],
+      "get": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "getActionOverride",
+        "summary": "Current override for an action slot",
+        "responses": {
+          "200": {
+            "description": "Override state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActionOverride"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "postActionOverride",
+        "summary": "Set manual override (ON/OFF/triac_fixed/AUTO)",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OverrideRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Override applied",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OverridePostResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/actions/{index}/override/clear": {
+      "parameters": [
+        {
+          "$ref": "#/components/parameters/actionIndex"
+        }
+      ],
+      "post": {
+        "tags": [
+          "Actions"
+        ],
+        "operationId": "postActionOverrideClear",
+        "summary": "Clear override (return to AUTO)",
+        "responses": {
+          "200": {
+            "description": "Cleared",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "state"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "state": {
+                      "type": "string",
+                      "enum": [
+                        "auto"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/sources": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "getSources",
+        "summary": "Supported and active metering sources",
+        "responses": {
+          "200": {
+            "description": "Sources info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcesInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sources/diagnostics": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "getSourcesDiagnostics",
+        "summary": "Detailed metering diagnostics",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/linkyTail"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Diagnostics payload (shape varies by source)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourceDiagnostics"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sources/brute_panel": {
+      "get": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "getSourcesBrutePanel",
+        "summary": "Vendor debug panel JSON",
+        "description": "Dynamic shape depending on active source. Optional query `idx` for BalansunPeer peer polling.",
+        "parameters": [
+          {
+            "name": "idx",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            },
+            "description": "Panel index (used by BalansunPeer peer default path builder)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Source-specific debug JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/sources/test/inject": {
+      "post": {
+        "tags": [
+          "Lab"
+        ],
+        "operationId": "postSourcesTestInject",
+        "summary": "Inject measurement-shaped JSON (HIL builds only)",
+        "description": "Available only when firmware is built with `BALANSUN_ENABLE_SOURCE_TEST_API`\n(`pio run -e hil`). Omitted from production OpenAPI embed on device.\n",
+        "x-balansun-build": "hil",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Measurements"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Injected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Not available on production builds"
+          }
+        }
+      }
+    },
+    "/api/v1/gpio": {
+      "get": {
+        "tags": [
+          "GPIO"
+        ],
+        "operationId": "getGpio",
+        "summary": "GPIO levels for live diagrams",
+        "description": "Returns levels for pins 0\u201333 except SPI flash bus (read mask wider than write mask).",
+        "responses": {
+          "200": {
+            "description": "Pin levels",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GpioLevels"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "GPIO"
+        ],
+        "operationId": "putGpio",
+        "summary": "Drive one GPIO output",
+        "description": "Rejects router-critical pins (triac, UART, LEDs, OneWire, flash straps, etc.).",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GpioPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pin set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GpioPutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/public": {
+      "get": {
+        "tags": [
+          "Network"
+        ],
+        "operationId": "getPublic",
+        "summary": "Non-sensitive UI bootstrap",
+        "description": "Always readable without HTTP API password.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Public bootstrap",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicInfo"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postAuthLogin",
+        "summary": "Create API session",
+        "description": "When HTTP API password is enabled, returns a session token for `Authorization: Bearer \u2026`.\nOpen without credentials. When auth is disabled, returns `{ok:true}` without a token.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthLoginRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthLoginResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postAuthLogout",
+        "summary": "End API session",
+        "description": "Clears the active server session; requires a valid Bearer token when auth is enabled.",
+        "responses": {
+          "200": {
+            "description": "Logged out",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/tokens": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getAuthTokens",
+        "summary": "List API access tokens",
+        "description": "Lists persisted personal access tokens (labels and ids only). Requires HTTP API auth.\nReturns 400 when API password is not enabled.\n",
+        "responses": {
+          "200": {
+            "description": "Token list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuthTokenInfo"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postAuthTokens",
+        "summary": "Create API access token",
+        "description": "Creates a persisted bearer token for automation (Home Assistant, scripts). The secret\n`token` is returned once at creation; the secret is stored in EEPROM (included in\n`GET /api/v1/system/backup` export). Max 4 tokens.\nChanging the HTTP API password revokes all tokens.\n",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AuthTokenCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthTokenCreateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/auth/tokens/{id}": {
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "deleteAuthToken",
+        "summary": "Revoke API access token",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 255
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Revoked",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      }
+    },
+    "/api/v1/wifi": {
+      "get": {
+        "tags": [
+          "Network"
+        ],
+        "operationId": "getWifi",
+        "summary": "Wi-Fi status",
+        "description": "Open during AP captive-portal setup even when API auth is enabled.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Wi-Fi info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiInfo"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Network"
+        ],
+        "operationId": "putWifi",
+        "summary": "Join Wi-Fi network",
+        "description": "Open during AP setup. When `persist` is true (default), saves credentials and schedules reboot.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WifiPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Reconnect started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiPutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          }
+        }
+      }
+    },
+    "/api/v1/wifi/scan": {
+      "get": {
+        "tags": [
+          "Network"
+        ],
+        "operationId": "getWifiScan",
+        "summary": "Scan surrounding Wi-Fi networks",
+        "description": "Returns 202 while scan is in progress. Open during AP setup.",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Scan complete",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiScanResult"
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Scan in progress",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WifiScanInProgress"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystem",
+        "summary": "Runtime system metrics",
+        "responses": {
+          "200": {
+            "description": "System info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/audit": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemAudit",
+        "summary": "Recent config change audit log (RAM ring)",
+        "description": "Route names and changed keys only; secrets are never logged.",
+        "responses": {
+          "200": {
+            "description": "Audit entries",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfigAuditEnvelope"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/device": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getDevice",
+        "summary": "Device identity and firmware/chip info",
+        "responses": {
+          "200": {
+            "description": "Device info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/health": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getHealth",
+        "summary": "Health and commissioning self-test status",
+        "responses": {
+          "200": {
+            "description": "Health info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/health/self-test/run": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postHealthSelfTestRun",
+        "summary": "Start commissioning self-test",
+        "responses": {
+          "200": {
+            "description": "Test started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "running"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "running": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "description": "Triac self-test not compiled on this profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorCapabilityDisabled"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/health/self-test/skip": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postHealthSelfTestSkip",
+        "summary": "Skip commissioning self-test",
+        "description": "Persists skip flag to EEPROM.",
+        "responses": {
+          "200": {
+            "description": "Skipped",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "skipped"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "skipped": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/health/self-test/simulate": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postHealthSelfTestSimulate",
+        "summary": "HIL-only \u2014 inject persisted self-test results",
+        "description": "Available only on `hil` firmware builds (`BALANSUN_ENABLE_SOURCE_TEST_API`).\nWrites `zc_ok`, `triac_ok`, and `source_ok` into persisted commissioning results for automated safety-lockout tests. Not present on production images.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "zc_ok": {
+                    "type": "boolean"
+                  },
+                  "triac_ok": {
+                    "type": "boolean"
+                  },
+                  "source_ok": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Simulated results persisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "404": {
+            "description": "Route not compiled (production firmware)"
+          }
+        }
+      }
+    },
+    "/api/v1/health/hardware/recheck": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postHealthHardwareRecheck",
+        "summary": "Re-run hardware presence probes",
+        "responses": {
+          "200": {
+            "description": "Recheck completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/hardware/status-led/test": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postHardwareStatusLedTest",
+        "summary": "Flash status LED preview colors",
+        "responses": {
+          "200": {
+            "description": "Preview started",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/reboot": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postSystemReboot",
+        "summary": "Reboot device",
+        "description": "Schedules reboot after ~500 ms.",
+        "responses": {
+          "200": {
+            "description": "Reboot scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/pins": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemPins",
+        "summary": "Hardware GPIO pin map",
+        "description": "Stored GPIO assignments, PCB defaults for this firmware build, and pin-map status flags.\nSame pin fields as `GET /api/v1/config` without the full router configuration.\n",
+        "responses": {
+          "200": {
+            "description": "Pin map JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HardwarePinMap"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "putSystemPins",
+        "summary": "Update hardware GPIO pin map",
+        "description": "Partial update of `pin_*` fields only. Persists to EEPROM. Set `reboot_required` in the response\nwhen assignments changed; call `POST /api/v1/system/reboot` to apply at runtime.\n\n**Source-aware validation:** only GPIO fields used by the effective measurement source are accepted.\nGeneral pins (`pin_triac_dim`, `pin_zero_cross`, `pin_temp`) are always allowed. UART pins apply when\nthe effective source is JsyMk194, JsyMk333, or Linky; analog pins apply only for Analog. Other `pin_*` keys\nreturn HTTP 400 with a message such as `pin_analog0 not applicable for measurement source JsyMk194`.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HardwarePinMapPut"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pin map saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/system/pins/reset": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postSystemPinsReset",
+        "summary": "Reset GPIO pin map to firmware defaults",
+        "description": "Writes the PCB default GPIO numbers for all hardware pin assignments in EEPROM.\nDoes not reboot; call `POST /api/v1/system/reboot` to apply.\n",
+        "responses": {
+          "200": {
+            "description": "Pin map reset persisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "reboot_required"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    },
+                    "reboot_required": {
+                      "type": "boolean"
+                    },
+                    "eeprom_bytes": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/system/factory-reset": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postSystemFactoryReset",
+        "summary": "Factory reset and reboot",
+        "description": "Clears HTTP API password, consumption history, and action EEPROM pointer.\nOpen when not in pure STA mode (AP setup). Schedules reboot.\n",
+        "security": [],
+        "responses": {
+          "200": {
+            "description": "Reset scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/save-now": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postSystemSaveNow",
+        "summary": "Persist current settings to EEPROM",
+        "responses": {
+          "200": {
+            "description": "Saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/eeprom": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemEeprom",
+        "summary": "EEPROM usage summary",
+        "responses": {
+          "200": {
+            "description": "EEPROM stats",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/arduino-ota": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemArduinoOta",
+        "summary": "Arduino IDE OTA password status",
+        "responses": {
+          "200": {
+            "description": "OTA info",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArduinoOtaInfo"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "putSystemArduinoOta",
+        "summary": "Set Arduino OTA password",
+        "description": "Empty password clears protection. Schedules reboot after save.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Saved; reboot scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArduinoOtaPutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/http-auth": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "putSystemHttpAuth",
+        "summary": "Enable or disable HTTP API password",
+        "description": "Body `{\"password\":\"\"}` clears auth. Open when auth is disabled (first password),\nor in AP mode for lockout recovery. Requires existing credentials when auth is on.\n",
+        "security": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordPutRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Password updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HttpAuthPutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/system/backup": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemBackup",
+        "summary": "Export device backup",
+        "description": "Full user backup JSON assembled on the device (config, actions, time, Wi\u2011Fi, and when\nHTTP API auth is enabled the API password and permanent access token secrets from EEPROM).\nSame shape as the Settings \u2192 Backup download file.\n",
+        "responses": {
+          "200": {
+            "description": "Backup document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalansunBackup"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "putSystemBackup",
+        "summary": "Restore device backup",
+        "description": "Applies a backup document from export. Replaces config, actions, time, Wi\u2011Fi, HTTP API\npassword, and permanent access tokens, then persists to EEPROM. Open on soft-AP during\nsetup when HTTP auth is enabled (same as other restore routes).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BalansunBackup"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Restored and persisted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/system/backup/manifest": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemBackupManifest",
+        "summary": "Backup part manifest (constrained tier)",
+        "responses": {
+          "200": {
+            "description": "Manifest listing backup parts",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/system/backup/part/{part}": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getSystemBackupPart",
+        "summary": "Export one backup part",
+        "parameters": [
+          {
+            "name": "part",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "network",
+                "config",
+                "actions"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Partial backup JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "putSystemBackupPart",
+        "summary": "Restore one backup part",
+        "parameters": [
+          {
+            "name": "part",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "network",
+                "config",
+                "actions"
+              ]
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Part restored",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EepromOk"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/firmware/ota": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "postFirmwareOta",
+        "summary": "Upload firmware binary (web OTA)",
+        "description": "Multipart upload of `.bin` firmware. Optional MD5 via form field or query `md5`.\nRequires HTTP API auth when enabled. Reboots on success.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "firmware": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "ESP32 application binary"
+                  }
+                }
+              },
+              "encoding": {
+                "firmware": {
+                  "contentType": "application/octet-stream"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "md5",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Expected MD5 hex digest of the binary"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Update OK; reboot scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FirmwareOtaResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/fleet/export": {
+      "get": {
+        "tags": [
+          "Fleet"
+        ],
+        "operationId": "getFleetExport",
+        "summary": "Export signed configuration bundle",
+        "description": "Unsigned JSON plus HMAC signature when `fleet_trust_key` is configured.",
+        "responses": {
+          "200": {
+            "description": "Fleet bundle",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetExport"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalError"
+          }
+        }
+      }
+    },
+    "/api/v1/fleet/import": {
+      "post": {
+        "tags": [
+          "Fleet"
+        ],
+        "operationId": "postFleetImport",
+        "summary": "Import signed configuration bundle",
+        "description": "Requires `fleet_trust_key` in device config. Use `dry_run` to validate only.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FleetImportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Imported or validated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FleetImportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          }
+        }
+      }
+    },
+    "/api/v1/fleet/trust-key": {
+      "put": {
+        "tags": [
+          "Fleet"
+        ],
+        "operationId": "putFleetTrustKey",
+        "summary": "Set fleet HMAC trust key",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "fleet_trust_key"
+                ],
+                "properties": {
+                  "fleet_trust_key": {
+                    "type": "string",
+                    "maxLength": 64
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Key saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "ok",
+                    "configured"
+                  ],
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "configured": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/mqtt/discover": {
+      "post": {
+        "tags": [
+          "MQTT"
+        ],
+        "operationId": "postMqttDiscover",
+        "summary": "Republish Home Assistant MQTT discovery",
+        "responses": {
+          "200": {
+            "description": "Discovery republished",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/mqtt/reconnect": {
+      "post": {
+        "tags": [
+          "MQTT"
+        ],
+        "operationId": "postMqttReconnect",
+        "summary": "Schedule MQTT reconnect",
+        "responses": {
+          "200": {
+            "description": "Reconnect scheduled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/mqtt/publish-now": {
+      "post": {
+        "tags": [
+          "MQTT"
+        ],
+        "operationId": "postMqttPublishNow",
+        "summary": "Publish MQTT state immediately",
+        "responses": {
+          "200": {
+            "description": "Publish triggered",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttActionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/mqtt/test": {
+      "post": {
+        "tags": [
+          "MQTT"
+        ],
+        "operationId": "postMqttTest",
+        "summary": "Test MQTT broker connection",
+        "description": "Optional JSON body overrides broker fields without saving config.",
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MqttTestRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Broker reachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttTestResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "413": {
+            "$ref": "#/components/responses/PayloadTooLarge"
+          },
+          "502": {
+            "description": "Broker unreachable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MqttTestResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/sources/pmqtt/preview": {
+      "post": {
+        "tags": [
+          "Sources"
+        ],
+        "operationId": "postPmqttPreview",
+        "summary": "Preview Pmqtt bindings against recent MQTT payload cache",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PmqttPreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Preview results per binding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PmqttPreviewResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    },
+    "/api/v1/openapi.json": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "operationId": "getOpenapi",
+        "summary": "OpenAPI path index (compact)",
+        "description": "Returns paths-only OpenAPI 3.0 JSON embedded in firmware (no full schemas).",
+        "responses": {
+          "200": {
+            "description": "OpenAPI document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "openapi",
+                    "info",
+                    "paths"
+                  ],
+                  "properties": {
+                    "openapi": {
+                      "type": "string",
+                      "example": "3.0.0"
+                    },
+                    "info": {
+                      "type": "object"
+                    },
+                    "paths": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "hex64",
+        "description": "Session token from `POST /api/v1/auth/login` when HTTP API password is enabled.\nSee /en/http-api-security/.\n"
+      }
+    },
+    "parameters": {
+      "actionIndex": {
+        "name": "index",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 19
+        },
+        "description": "Action slot index (0 = triac/cumulus, max 19)"
+      },
+      "historyWindow": {
+        "name": "window",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "string",
+          "enum": [
+            "48h",
+            "10m"
+          ],
+          "default": "48h"
+        },
+        "description": "History time window"
+      },
+      "historyMaxPoints": {
+        "name": "max_points",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 600,
+          "default": 200
+        },
+        "description": "Maximum points returned (capped at 600)"
+      },
+      "linkyTail": {
+        "name": "linky_tail",
+        "in": "query",
+        "required": false,
+        "schema": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2048
+        },
+        "description": "Max Linky TIC tail bytes in diagnostics response"
+      }
+    },
+    "responses": {
+      "BadRequest": {
+        "description": "Invalid request or validation error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Unauthorized": {
+        "description": "Valid API session required (Bearer token from login)",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "NotFound": {
+        "description": "Resource not found",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "Forbidden": {
+        "description": "Operation not allowed",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "PayloadTooLarge": {
+        "description": "Request body too large",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      },
+      "InternalError": {
+        "description": "Internal server error",
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/Error"
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "error",
+          "message"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Machine-readable error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable detail"
+          }
+        }
+      },
+      "ApiOk": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "additionalProperties": true
+      },
+      "MessageOk": {
+        "type": "object",
+        "required": [
+          "ok",
+          "message"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "EepromOk": {
+        "type": "object",
+        "required": [
+          "ok",
+          "eeprom_bytes"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "eeprom_bytes": {
+            "type": "integer",
+            "description": "EEPROM write address or bytes written"
+          }
+        }
+      },
+      "MeterChannel": {
+        "type": "object",
+        "properties": {
+          "house_load_w": {
+            "type": "integer",
+            "description": "Foyer demand (W) when exposed"
+          },
+          "pv_production_w": {
+            "type": "integer",
+            "description": "PV production (W)"
+          },
+          "grid_net_w": {
+            "type": "integer",
+            "description": "Net grid exchange; import positive, export negative (W)"
+          },
+          "active_import_w": {
+            "type": "integer"
+          },
+          "active_export_w": {
+            "type": "integer"
+          },
+          "apparent_import_va": {
+            "type": "integer"
+          },
+          "apparent_export_va": {
+            "type": "integer"
+          },
+          "energy_day_import_wh": {
+            "type": "number"
+          },
+          "energy_day_export_wh": {
+            "type": "number"
+          },
+          "energy_total_import_wh": {
+            "type": "number"
+          },
+          "energy_total_export_wh": {
+            "type": "number"
+          }
+        }
+      },
+      "RawMeter": {
+        "type": "object",
+        "properties": {
+          "voltage_house_v": {
+            "type": "number"
+          },
+          "current_house_a": {
+            "type": "number"
+          },
+          "pf_house": {
+            "type": "number"
+          },
+          "voltage_second_v": {
+            "type": "number"
+          },
+          "current_second_a": {
+            "type": "number"
+          },
+          "pf_second": {
+            "type": "number"
+          },
+          "freq_hz": {
+            "type": "number"
+          },
+          "house_net_power_w": {
+            "type": "number"
+          },
+          "second_net_power_w": {
+            "type": "number"
+          }
+        }
+      },
+      "MeasurementDiagnostics": {
+        "type": "object",
+        "properties": {
+          "adc_clipping": {
+            "type": "boolean"
+          },
+          "regulation_hunting": {
+            "type": "boolean"
+          },
+          "source_health": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "source_stale": {
+            "type": "boolean"
+          },
+          "regulation_active": {
+            "type": "boolean"
+          },
+          "site_cap_active": {
+            "type": "boolean"
+          },
+          "mqtt_connected": {
+            "type": "boolean"
+          },
+          "triac_sync_state": {
+            "$ref": "#/components/schemas/TriacSyncState"
+          }
+        }
+      },
+      "TriacOverrideRequest": {
+        "type": "object",
+        "required": [
+          "command"
+        ],
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "`AUTO` or percent `0`\u2013`100` (same as MQTT `triac/set`)."
+          }
+        }
+      },
+      "TemperatureSlotConfig": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "address": {
+            "type": "string",
+            "description": "16 hex digit ROM id, or empty for auto-bind by discovery order."
+          }
+        }
+      },
+      "TemperatureSensorReading": {
+        "type": "object",
+        "properties": {
+          "slot": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "address": {
+            "type": "string",
+            "nullable": true
+          },
+          "temperature_c": {
+            "type": "number",
+            "nullable": true
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "When true, this reading feeds regulation and temperature_c."
+          }
+        }
+      },
+      "TemperatureSensorsTelemetry": {
+        "type": "object",
+        "properties": {
+          "gpio": {
+            "type": "integer"
+          },
+          "max_count": {
+            "type": "integer",
+            "enum": [
+              2
+            ]
+          },
+          "discovered_count": {
+            "type": "integer"
+          },
+          "bus_active": {
+            "type": "boolean"
+          },
+          "sensors": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "$ref": "#/components/schemas/TemperatureSensorReading"
+            }
+          }
+        }
+      },
+      "Measurements": {
+        "type": "object",
+        "required": [
+          "house",
+          "second",
+          "raw_meter"
+        ],
+        "properties": {
+          "temperature_c": {
+            "type": "number",
+            "description": "Primary probe temperature for regulation (first enabled valid slot)."
+          },
+          "temperature_sensors": {
+            "$ref": "#/components/schemas/TemperatureSensorsTelemetry"
+          },
+          "date_valid": {
+            "type": "boolean"
+          },
+          "date": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "linky_tariff": {
+            "type": "string"
+          },
+          "house": {
+            "$ref": "#/components/schemas/MeterChannel"
+          },
+          "second": {
+            "$ref": "#/components/schemas/MeterChannel"
+          },
+          "raw_meter": {
+            "$ref": "#/components/schemas/RawMeter"
+          },
+          "diagnostics": {
+            "$ref": "#/components/schemas/MeasurementDiagnostics"
+          }
+        }
+      },
+      "TempoTariffStatus": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "ltarf": {
+            "type": "string"
+          },
+          "tomorrow_stge": {
+            "type": "string"
+          },
+          "today_color": {
+            "type": "string"
+          },
+          "tomorrow_color": {
+            "type": "string"
+          },
+          "tariff_code": {
+            "type": "integer"
+          },
+          "ltarf_bin": {
+            "type": "integer"
+          },
+          "stale": {
+            "type": "boolean"
+          },
+          "last_fetch_epoch": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "HistoryPower": {
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "window": {
+            "type": "string"
+          },
+          "max_points": {
+            "type": "integer"
+          },
+          "sample_period_s": {
+            "type": "integer"
+          },
+          "temperature_now_c": {
+            "type": "number"
+          },
+          "house_active_w": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "house_apparent_va": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "triac_active_w": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "triac_apparent_va": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "temperature_series_c": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          }
+        }
+      },
+      "HistoryEnergyDaily": {
+        "type": "object",
+        "properties": {
+          "delta_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "count": {
+            "type": "integer"
+          },
+          "idx_prom_du_jour": {
+            "type": "integer"
+          },
+          "import_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "export_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "day_dates_iso": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "days_capacity": {
+            "type": "integer"
+          },
+          "days_retained": {
+            "type": "integer"
+          },
+          "total_count": {
+            "type": "integer"
+          },
+          "offset": {
+            "type": "integer"
+          },
+          "limit": {
+            "type": "integer"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "pending_commit": {
+            "type": "boolean",
+            "description": "True when daily ring is staged in RAM and NVS flush is still pending (see balansun_loop commit).\n"
+          },
+          "ch1_import_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ch1_export_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ch2_import_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "ch2_export_wh_per_day": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date_iso": {
+                  "type": "string"
+                },
+                "delta_wh": {
+                  "type": "integer"
+                },
+                "ch1_import_wh": {
+                  "type": "integer"
+                },
+                "ch1_export_wh": {
+                  "type": "integer"
+                },
+                "ch2_import_wh": {
+                  "type": "integer"
+                },
+                "ch2_export_wh": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        }
+      },
+      "RouterConfig": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "dhcp_on": {
+            "type": "boolean"
+          },
+          "ip_fixed": {
+            "type": "string"
+          },
+          "gateway": {
+            "type": "string"
+          },
+          "subnet_mask": {
+            "type": "string"
+          },
+          "dns": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string",
+            "description": "Active source wire label (JsyMk194, Linky, BalansunPeer, \u2026)"
+          },
+          "peer_ip": {
+            "type": "string"
+          },
+          "peer_port": {
+            "type": "integer"
+          },
+          "peer_path": {
+            "type": "string"
+          },
+          "peer_protocol": {
+            "type": "string",
+            "enum": [
+              "json"
+            ]
+          },
+          "enphase_user": {
+            "type": "string"
+          },
+          "enphase_password": {
+            "type": "string"
+          },
+          "meter_channel": {
+            "type": "string"
+          },
+          "enphase_serial": {
+            "type": "string"
+          },
+          "mqtt_repeat_sec": {
+            "type": "integer"
+          },
+          "mqtt_ip": {
+            "type": "string"
+          },
+          "mqtt_port": {
+            "type": "integer"
+          },
+          "mqtt_user": {
+            "type": "string"
+          },
+          "mqtt_password": {
+            "type": "string"
+          },
+          "mqtt_prefix": {
+            "type": "string"
+          },
+          "mqtt_device_name": {
+            "type": "string"
+          },
+          "router_name": {
+            "type": "string"
+          },
+          "probe_second_name": {
+            "type": "string"
+          },
+          "probe_house_name": {
+            "type": "string"
+          },
+          "temperature_label": {
+            "type": "string",
+            "deprecated": true,
+            "description": "Legacy label for slot 0; prefer temperature_slots[0].label."
+          },
+          "temp_gpio": {
+            "type": "integer",
+            "enum": [
+              13,
+              21,
+              27,
+              33
+            ],
+            "description": "1-Wire data GPIO for all DS18B20 probes (reboot required after change)."
+          },
+          "temperature_slots": {
+            "type": "array",
+            "maxItems": 2,
+            "items": {
+              "$ref": "#/components/schemas/TemperatureSlotConfig"
+            }
+          },
+          "calib_u": {
+            "type": "integer"
+          },
+          "calib_i": {
+            "type": "integer"
+          },
+          "pmqtt_topic": {
+            "type": "string"
+          },
+          "pmqtt_schema": {
+            "type": "string"
+          },
+          "pmqtt_bindings": {
+            "type": "array",
+            "description": "Source Pmqtt per-metric bindings. When present and non-empty, firmware prefers this table over single-topic fields `pmqtt_topic` and `pmqtt_schema` when bindings are empty.\n",
+            "maxItems": 24,
+            "items": {
+              "$ref": "#/components/schemas/PmqttBinding"
+            }
+          },
+          "jsy_mk333_serial_baud": {
+            "type": "integer"
+          },
+          "install_country": {
+            "type": "string"
+          },
+          "install_country_variant": {
+            "type": "string"
+          },
+          "mains_nominal_v": {
+            "type": "integer"
+          },
+          "mains_frequency_mode": {
+            "type": "string",
+            "enum": [
+              "auto",
+              "manual"
+            ]
+          },
+          "mains_frequency_hz_manual": {
+            "type": "integer",
+            "enum": [
+              50,
+              60
+            ]
+          },
+          "mains_frequency_effective_hz": {
+            "type": "number"
+          },
+          "mains_frequency_source": {
+            "type": "string"
+          },
+          "mains_frequency_warning": {
+            "type": "string",
+            "nullable": true
+          },
+          "triac_override_max_temp_c": {
+            "type": "integer"
+          },
+          "http_cors_enabled": {
+            "type": "boolean"
+          },
+          "pwm_gpio": {
+            "type": "integer"
+          },
+          "pwm_mode": {
+            "type": "string"
+          },
+          "pwm_duty_percent": {
+            "type": "integer"
+          },
+          "pwm_inverted": {
+            "type": "boolean"
+          },
+          "tempo_rte_enabled": {
+            "type": "boolean"
+          },
+          "triac_cal_enabled": {
+            "type": "boolean"
+          },
+          "triac_calibration": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "duty_pct": {
+                  "type": "integer"
+                },
+                "measured_w": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          "hunting_reversal_threshold": {
+            "type": "integer"
+          },
+          "hunting_window_min": {
+            "type": "integer"
+          },
+          "expert_regulation_mode": {
+            "type": "integer"
+          },
+          "regulation_gain": {
+            "type": "integer"
+          },
+          "vacation_enabled": {
+            "type": "boolean"
+          },
+          "vacation_end_epoch": {
+            "type": "integer"
+          },
+          "max_routed_w": {
+            "type": "integer"
+          },
+          "triac_off_when_source_stale": {
+            "type": "boolean",
+            "description": "When true (router profiles only), suspend surplus routing when measurement source health score drops below 50 (`source_stale`): triac 0% and local GPIO/HTTP actions off until fresh data returns (`output_suspend.reason: source_stale`). Strongly recommended for BalansunPeer split installs and HTTP/MQTT metering sources.\n"
+          },
+          "triac_backoff_when_heater_idle": {
+            "type": "boolean"
+          },
+          "load_profile": {
+            "$ref": "#/components/schemas/LoadProfile"
+          },
+          "mqtt_json_commands": {
+            "type": "boolean"
+          },
+          "action_daily_cap_wh": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "HardwarePinMap": {
+        "type": "object",
+        "description": "Runtime hardware GPIO pin assignments and PCB defaults.",
+        "properties": {
+          "pin_triac_dim": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_zero_cross": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_uart_rx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_uart_tx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_temp": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 48
+          },
+          "pin_analog0": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_analog1": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_analog2": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_map_fallback_active": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "pin_map_reboot_pending": {
+            "type": "boolean",
+            "readOnly": true
+          },
+          "board_pin_profile": {
+            "type": "string",
+            "readOnly": true,
+            "enum": [
+              "wroom32",
+              "esp32s3"
+            ]
+          },
+          "pin_default_triac_dim": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_zero_cross": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_uart_rx": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_uart_tx": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_temp": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_analog0": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_analog1": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_default_analog2": {
+            "type": "integer",
+            "readOnly": true,
+            "minimum": 0,
+            "maximum": 48
+          }
+        }
+      },
+      "HardwarePinMapPut": {
+        "type": "object",
+        "description": "Partial hardware pin map update (at least one `pin_*` field required). Rejects meter GPIO fields\nthat do not match the effective measurement source (UART for JsyMk194/JsyMk333/Linky, analog for Analog only).\n",
+        "minProperties": 1,
+        "properties": {
+          "pin_triac_dim": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_zero_cross": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_uart_rx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_uart_tx": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_temp": {
+            "type": "integer",
+            "minimum": -1,
+            "maximum": 48
+          },
+          "pin_analog0": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_analog1": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          },
+          "pin_analog2": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 48
+          }
+        }
+      },
+      "ConfigEnvelope": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "config"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer",
+            "example": 4
+          },
+          "config": {
+            "$ref": "#/components/schemas/RouterConfig"
+          }
+        }
+      },
+      "ConfigPutBody": {
+        "type": "object",
+        "required": [
+          "config"
+        ],
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/RouterConfig"
+          }
+        }
+      },
+      "PmqttBinding": {
+        "type": "object",
+        "required": [
+          "metric",
+          "topic",
+          "format"
+        ],
+        "properties": {
+          "metric": {
+            "type": "string",
+            "description": "Stable metric id (e.g. `house.active_export_w`, `house.signed_net_w`)."
+          },
+          "topic": {
+            "type": "string",
+            "description": "MQTT topic subscribed when source is Pmqtt.",
+            "maxLength": 128
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "plain",
+              "json",
+              "snapshot"
+            ]
+          },
+          "path": {
+            "type": "string",
+            "description": "JSON field path (dot notation or `$.` prefixed; normalized by firmware)."
+          },
+          "enabled": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "PmqttPreviewRequest": {
+        "type": "object",
+        "required": [
+          "pmqtt_bindings"
+        ],
+        "properties": {
+          "pmqtt_bindings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PmqttBinding"
+            }
+          }
+        }
+      },
+      "PmqttPreviewResult": {
+        "type": "object",
+        "properties": {
+          "metric": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "plain",
+              "json",
+              "snapshot"
+            ]
+          },
+          "path": {
+            "type": "string"
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "value": {
+            "type": "number"
+          },
+          "display": {
+            "type": "string"
+          },
+          "age_ms": {
+            "type": "integer"
+          },
+          "raw_snippet": {
+            "type": "string"
+          },
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "PmqttPreviewResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "results"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PmqttPreviewResult"
+            }
+          }
+        }
+      },
+      "PwmStatus": {
+        "type": "object",
+        "properties": {
+          "pwm_gpio": {
+            "type": "integer"
+          },
+          "pwm_mode": {
+            "type": "string",
+            "enum": [
+              false,
+              "follow_triac",
+              "independent"
+            ]
+          },
+          "pwm_duty_percent": {
+            "type": "integer"
+          },
+          "pwm_inverted": {
+            "type": "boolean"
+          },
+          "effective_duty_percent": {
+            "type": "integer"
+          }
+        }
+      },
+      "PwmPutRequest": {
+        "type": "object",
+        "properties": {
+          "pwm_gpio": {
+            "type": "integer"
+          },
+          "pwm_mode": {
+            "type": "string"
+          },
+          "pwm_duty_percent": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "pwm_inverted": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TimeInfo": {
+        "type": "object",
+        "properties": {
+          "tz": {
+            "type": "string"
+          },
+          "ntp1": {
+            "type": "string"
+          },
+          "ntp2": {
+            "type": "string"
+          },
+          "date_valid": {
+            "type": "boolean"
+          },
+          "now": {
+            "type": "string"
+          }
+        }
+      },
+      "TimePutRequest": {
+        "type": "object",
+        "properties": {
+          "tz": {
+            "type": "string"
+          },
+          "ntp1": {
+            "type": "string"
+          },
+          "ntp2": {
+            "type": "string"
+          }
+        }
+      },
+      "ChannelState": {
+        "type": "string",
+        "enum": [
+          "disabled",
+          "schedule_off",
+          "schedule_on",
+          "surplus",
+          "override",
+          "cap_limited",
+          "heater_backoff",
+          "remote"
+        ]
+      },
+      "LiveActionSlot": {
+        "type": "object",
+        "required": [
+          "index",
+          "title"
+        ],
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "triac_open_percent": {
+            "type": "integer"
+          },
+          "true": {
+            "type": "boolean"
+          },
+          "channel_state": {
+            "$ref": "#/components/schemas/ChannelState"
+          },
+          "channel_reason": {
+            "type": "string"
+          }
+        }
+      },
+      "ActionsLive": {
+        "type": "object",
+        "properties": {
+          "temperature_c": {
+            "type": "number"
+          },
+          "temperature_sensors": {
+            "$ref": "#/components/schemas/TemperatureSensorsTelemetry"
+          },
+          "source": {
+            "type": "string"
+          },
+          "peer_ip": {
+            "type": "string"
+          },
+          "peer_port": {
+            "type": "integer"
+          },
+          "peer_path": {
+            "type": "string"
+          },
+          "active_actions_count": {
+            "type": "integer"
+          },
+          "active_slots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LiveActionSlot"
+            }
+          }
+        }
+      },
+      "ActionPeriod": {
+        "type": "object",
+        "properties": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              false,
+              true,
+              "power"
+            ]
+          },
+          "hour_end": {
+            "type": "integer"
+          },
+          "power_min_w": {
+            "type": "integer"
+          },
+          "power_max_w": {
+            "type": "integer"
+          },
+          "temp_inf_c": {
+            "type": "integer"
+          },
+          "temp_sup_c": {
+            "type": "integer"
+          }
+        }
+      },
+      "ActionConfig": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "triac",
+              "local_gpio",
+              "remote_http"
+            ]
+          },
+          "host": {
+            "type": "string"
+          },
+          "port": {
+            "type": "integer"
+          },
+          "path_on": {
+            "type": "string"
+          },
+          "path_off": {
+            "type": "string"
+          },
+          "triac_sensitivity": {
+            "type": "integer"
+          },
+          "regulation_mode": {
+            "type": "integer"
+          },
+          "ki": {
+            "type": "integer"
+          },
+          "kp": {
+            "type": "integer"
+          },
+          "kd": {
+            "type": "integer"
+          },
+          "pid_enabled": {
+            "type": "boolean"
+          },
+          "repeat_sec": {
+            "type": "integer"
+          },
+          "tempo_sec": {
+            "type": "integer"
+          },
+          "periods": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionPeriod"
+            }
+          }
+        }
+      },
+      "ActionsConfigEnvelope": {
+        "type": "object",
+        "required": [
+          "schema_version",
+          "nb_actions",
+          "actions"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "integer"
+          },
+          "nb_actions": {
+            "type": "integer"
+          },
+          "actions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionConfig"
+            }
+          }
+        }
+      },
+      "ActionsSchema": {
+        "type": "object",
+        "properties": {
+          "schema_version": {
+            "type": "integer"
+          },
+          "max_actions": {
+            "type": "integer"
+          },
+          "index_0_role": {
+            "type": "string"
+          },
+          "period_modes": {
+            "type": "string"
+          },
+          "time_scale": {
+            "type": "string"
+          },
+          "units": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ActionOverride": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "integer"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "auto",
+              true,
+              false,
+              "triac_fixed"
+            ]
+          },
+          "triac_open_percent": {
+            "type": "integer"
+          },
+          "sticky": {
+            "type": "boolean"
+          },
+          "expires_in_s": {
+            "type": "integer"
+          }
+        }
+      },
+      "OverrideRequest": {
+        "type": "object",
+        "required": [
+          "state"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "auto",
+              true,
+              false,
+              "triac_fixed"
+            ]
+          },
+          "triac_open_percent": {
+            "type": "integer"
+          },
+          "duration_s": {
+            "type": "integer"
+          }
+        }
+      },
+      "OverridePostResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "override"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "override": {
+            "$ref": "#/components/schemas/ActionOverride"
+          }
+        }
+      },
+      "StateEnvelope": {
+        "type": "object",
+        "properties": {
+          "measurements": {
+            "$ref": "#/components/schemas/Measurements"
+          },
+          "actions_live": {
+            "$ref": "#/components/schemas/ActionsLive"
+          },
+          "triac_open_percent": {
+            "type": "integer"
+          },
+          "heater_load_backoff_active": {
+            "type": "boolean"
+          },
+          "temperature_c": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string"
+          },
+          "date_valid": {
+            "type": "boolean"
+          },
+          "source": {
+            "type": "string"
+          },
+          "override_summary": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ActionOverride"
+            }
+          },
+          "status": {
+            "type": "object",
+            "properties": {
+              "source_health": {
+                "type": "integer"
+              },
+              "source_stale": {
+                "type": "boolean"
+              },
+              "regulation_active": {
+                "type": "boolean"
+              },
+              "site_cap_active": {
+                "type": "boolean"
+              },
+              "mqtt_connected": {
+                "type": "boolean"
+              },
+              "device_lifecycle": {
+                "$ref": "#/components/schemas/DeviceLifecycle"
+              },
+              "regulation_motion": {
+                "$ref": "#/components/schemas/RegulationMotion"
+              },
+              "output_suspend": {
+                "$ref": "#/components/schemas/OutputSuspend"
+              },
+              "triac_sync_state": {
+                "$ref": "#/components/schemas/TriacSyncState"
+              }
+            }
+          }
+        }
+      },
+      "SystemInfo": {
+        "type": "object",
+        "properties": {
+          "uptime_hours": {
+            "type": "number"
+          },
+          "wifi_rssi_dbm": {
+            "type": "integer"
+          },
+          "wifi_bssid": {
+            "type": "string"
+          },
+          "mac": {
+            "type": "string"
+          },
+          "ssid": {
+            "type": "string"
+          },
+          "ip": {
+            "type": "string"
+          },
+          "gateway": {
+            "type": "string"
+          },
+          "subnet": {
+            "type": "string"
+          },
+          "dns": {
+            "type": "string"
+          },
+          "metering_task_ms": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "loop_task_ms": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            },
+            "minItems": 3,
+            "maxItems": 3
+          },
+          "eeprom_used_percent": {
+            "type": "number"
+          },
+          "irq_half_period_raw_vs_in": {
+            "type": "string"
+          },
+          "triac_itmode": {
+            "type": "integer"
+          },
+          "triac_zc_synced": {
+            "type": "boolean"
+          },
+          "configured_frequency_hz": {
+            "type": "number"
+          }
+        }
+      },
+      "DeviceFirmwareInfo": {
+        "type": "object",
+        "properties": {
+          "sketch_md5": {
+            "type": "string"
+          },
+          "sketch_size": {
+            "type": "integer"
+          },
+          "free_sketch_space": {
+            "type": "integer"
+          },
+          "sdk_version": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceChipInfo": {
+        "type": "object",
+        "properties": {
+          "model": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer"
+          },
+          "cores": {
+            "type": "integer"
+          },
+          "cpu_mhz": {
+            "type": "integer"
+          },
+          "flash_size": {
+            "type": "integer"
+          },
+          "flash_mhz": {
+            "type": "integer"
+          },
+          "mac": {
+            "type": "string"
+          }
+        }
+      },
+      "DeviceInfo": {
+        "type": "object",
+        "properties": {
+          "device_uid": {
+            "type": "string",
+            "description": "Stable factory MAC as 12 lowercase hex digits (read-only).",
+            "pattern": "^[0-9a-f]{12}$",
+            "example": "a1b2c3d4e5f6"
+          },
+          "source": {
+            "type": "string"
+          },
+          "source_data": {
+            "type": "string"
+          },
+          "router_name": {
+            "type": "string"
+          },
+          "firmware_version": {
+            "type": "string"
+          },
+          "probe_second_name": {
+            "type": "string"
+          },
+          "probe_house_name": {
+            "type": "string"
+          },
+          "peer_ip": {
+            "type": "string"
+          },
+          "peer_port": {
+            "type": "integer"
+          },
+          "peer_path": {
+            "type": "string"
+          },
+          "temperature_label": {
+            "type": "string"
+          },
+          "firmware": {
+            "$ref": "#/components/schemas/DeviceFirmwareInfo"
+          },
+          "chip": {
+            "$ref": "#/components/schemas/DeviceChipInfo"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DeviceCapabilities"
+          }
+        }
+      },
+      "ProductProfile": {
+        "type": "string",
+        "description": "Compile-time firmware product profile wire id.",
+        "enum": [
+          "full_router",
+          "jsy_mk194_router",
+          "jsy_mk194_meter",
+          "meter_only"
+        ],
+        "example": "full_router"
+      },
+      "ApiErrorCapabilityDisabled": {
+        "type": "object",
+        "description": "Mutating routes return 403 when the flashed profile lacks the requested capability.",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "capability_disabled"
+          },
+          "message": {
+            "type": "string"
+          },
+          "missing_cap": {
+            "type": "string",
+            "example": "triac"
+          }
+        }
+      },
+      "ApiErrorNotReady": {
+        "type": "object",
+        "description": "Telemetry routes return 503 until metering is ready.",
+        "properties": {
+          "error": {
+            "type": "string",
+            "example": "not_ready"
+          },
+          "message": {
+            "type": "string"
+          },
+          "device_lifecycle": {
+            "$ref": "#/components/schemas/DeviceLifecycle"
+          },
+          "missing_cap": {
+            "type": "string",
+            "example": "telemetry"
+          }
+        }
+      },
+      "DeviceLifecycle": {
+        "type": "string",
+        "enum": [
+          "booting",
+          "configured",
+          "metering",
+          "regulating",
+          "suspended",
+          "commissioning"
+        ]
+      },
+      "OutputSuspendReason": {
+        "type": "string",
+        "enum": [
+          "none",
+          "safety_lockout",
+          "vacation",
+          "source_stale",
+          "commissioning"
+        ]
+      },
+      "OutputSuspend": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "reason": {
+            "$ref": "#/components/schemas/OutputSuspendReason"
+          }
+        }
+      },
+      "RegulationMotion": {
+        "type": "string",
+        "enum": [
+          "idle",
+          "increasing",
+          "decreasing",
+          "at_minimum",
+          "at_maximum"
+        ]
+      },
+      "TriacSyncState": {
+        "type": "string",
+        "enum": [
+          "unsynced",
+          "acquiring",
+          "synced",
+          "fallback_10ms",
+          "not_applicable"
+        ]
+      },
+      "FirmwareCapabilities": {
+        "type": "object",
+        "properties": {
+          "surplus_regulation": {
+            "type": "boolean",
+            "description": "True for router firmware (surplus routing + triac dimming). False for meter-gateway devices that measure only.\n"
+          },
+          "triac": {
+            "type": "boolean",
+            "description": "True when this firmware includes triac dimming output. On router profiles this is always true and mirrors surplus_regulation; it is false only on meter-gateway (meter-only) builds. Consumers must not treat triac as independently disableable on router firmware.\n"
+          },
+          "multi_action": {
+            "type": "boolean"
+          },
+          "source_test_inject": {
+            "type": "boolean"
+          },
+          "meters": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "meter_pack": {
+            "type": "string",
+            "description": "Compile-time meter pack id (full when all meters linked)."
+          },
+          "triac_dimming": {
+            "type": "boolean",
+            "description": "True when triac percent surplus routing applies."
+          }
+        }
+      },
+      "LoadProfile": {
+        "type": "string",
+        "enum": [
+          "water_heater_triac",
+          "generic_triac"
+        ]
+      },
+      "DeviceCapabilities": {
+        "type": "object",
+        "properties": {
+          "tier": {
+            "type": "string",
+            "enum": [
+              "constrained",
+              "standard",
+              "extended"
+            ]
+          },
+          "psram": {
+            "type": "boolean"
+          },
+          "hist_max_points": {
+            "type": "integer"
+          },
+          "config_export_max_bytes": {
+            "type": "integer"
+          },
+          "full_config_export": {
+            "type": "boolean"
+          },
+          "product_profile": {
+            "$ref": "#/components/schemas/ProductProfile"
+          },
+          "firmware_capabilities": {
+            "$ref": "#/components/schemas/FirmwareCapabilities"
+          }
+        }
+      },
+      "SafetyLockout": {
+        "type": "object",
+        "properties": {
+          "active": {
+            "type": "boolean"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "zc_failed",
+                "triac_failed",
+                "source_failed"
+              ]
+            }
+          }
+        }
+      },
+      "SelfTestSeverity": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "warning",
+          "critical"
+        ]
+      },
+      "HealthSelfTest": {
+        "type": "object",
+        "properties": {
+          "pending": {
+            "type": "boolean"
+          },
+          "skipped": {
+            "type": "boolean"
+          },
+          "running": {
+            "type": "boolean"
+          },
+          "last_run_epoch": {
+            "type": "integer"
+          },
+          "safety_lockout_active": {
+            "type": "boolean"
+          },
+          "safety_lockout_reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "severity": {
+            "type": "object",
+            "properties": {
+              "zc": {
+                "$ref": "#/components/schemas/SelfTestSeverity"
+              },
+              "triac": {
+                "$ref": "#/components/schemas/SelfTestSeverity"
+              },
+              "source": {
+                "$ref": "#/components/schemas/SelfTestSeverity"
+              }
+            }
+          },
+          "results": {
+            "type": "object",
+            "properties": {
+              "zc_ok": {
+                "type": "boolean"
+              },
+              "triac_ok": {
+                "type": "boolean"
+              },
+              "source_ok": {
+                "type": "boolean"
+              },
+              "zc_edges_per_sec": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "HealthInfo": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "uptime_s": {
+            "type": "integer"
+          },
+          "telemetry_ready": {
+            "type": "boolean"
+          },
+          "source_ok": {
+            "type": "boolean"
+          },
+          "date_valid": {
+            "type": "boolean"
+          },
+          "mqtt_connected": {
+            "type": "boolean"
+          },
+          "free_heap": {
+            "type": "integer"
+          },
+          "wifi_connected": {
+            "type": "boolean"
+          },
+          "pin_map_fallback_active": {
+            "type": "boolean"
+          },
+          "pin_map_reboot_pending": {
+            "type": "boolean"
+          },
+          "device_lifecycle": {
+            "$ref": "#/components/schemas/DeviceLifecycle"
+          },
+          "product_profile": {
+            "$ref": "#/components/schemas/ProductProfile"
+          },
+          "output_suspend": {
+            "$ref": "#/components/schemas/OutputSuspend"
+          },
+          "safety_lockout": {
+            "$ref": "#/components/schemas/SafetyLockout"
+          },
+          "self_test": {
+            "$ref": "#/components/schemas/HealthSelfTest"
+          }
+        }
+      },
+      "ConfigAuditEntry": {
+        "type": "object",
+        "properties": {
+          "ts_ms": {
+            "type": "integer"
+          },
+          "route": {
+            "type": "string"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "ConfigAuditEnvelope": {
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConfigAuditEntry"
+            }
+          }
+        }
+      },
+      "EepromInfo": {
+        "type": "object",
+        "properties": {
+          "used_percent": {
+            "type": "number"
+          },
+          "total_bytes": {
+            "type": "integer"
+          },
+          "used_bytes": {
+            "type": "integer"
+          },
+          "key_addresses": {
+            "type": "object",
+            "properties": {
+              "parameters": {
+                "type": "integer"
+              },
+              "history": {
+                "type": "integer"
+              }
+            }
+          }
+        }
+      },
+      "SourcesInfo": {
+        "type": "object",
+        "properties": {
+          "supported": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "current": {
+            "type": "string"
+          },
+          "current_data": {
+            "type": "string"
+          }
+        }
+      },
+      "SourceDiagnostics": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "source_data": {
+            "type": "string"
+          },
+          "date": {
+            "type": "string"
+          },
+          "date_valid": {
+            "type": "boolean"
+          },
+          "temperature_c": {
+            "type": "number"
+          },
+          "frequency_hz": {
+            "type": "number"
+          },
+          "voltage_house_v": {
+            "type": "number"
+          },
+          "current_house_a": {
+            "type": "number"
+          },
+          "pf_house": {
+            "type": "number"
+          },
+          "voltage_second_v": {
+            "type": "number"
+          },
+          "current_second_a": {
+            "type": "number"
+          },
+          "pf_second": {
+            "type": "number"
+          },
+          "diagnostics": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "linky": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "peer": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "enphase": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "shelly_em": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "smartg": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "analog_waveform": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "GpioLevels": {
+        "type": "object",
+        "properties": {
+          "levels": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            },
+            "description": "Keys are pin numbers \"0\"..\"33\""
+          },
+          "updated_ms": {
+            "type": "integer"
+          }
+        }
+      },
+      "GpioPutRequest": {
+        "type": "object",
+        "required": [
+          "gpio",
+          "level"
+        ],
+        "properties": {
+          "gpio": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "integer",
+            "enum": [
+              0,
+              1
+            ]
+          }
+        }
+      },
+      "GpioPutResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "gpio",
+          "level"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "gpio": {
+            "type": "integer"
+          },
+          "level": {
+            "type": "integer"
+          }
+        }
+      },
+      "HttpAuthInfo": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean"
+          },
+          "username": {
+            "type": "string"
+          }
+        }
+      },
+      "PublicInfo": {
+        "type": "object",
+        "properties": {
+          "http_auth": {
+            "$ref": "#/components/schemas/HttpAuthInfo"
+          },
+          "device": {
+            "type": "object",
+            "properties": {
+              "router_name": {
+                "type": "string"
+              },
+              "firmware_version": {
+                "type": "string"
+              },
+              "source_configured": {
+                "type": "boolean"
+              }
+            }
+          },
+          "wifi": {
+            "type": "object",
+            "properties": {
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "ap",
+                  "sta"
+                ]
+              },
+              "connected": {
+                "type": "boolean"
+              },
+              "setup_ap": {
+                "type": "boolean",
+                "description": "True while captive-portal soft-AP is active (STA may also be up)."
+              }
+            }
+          }
+        }
+      },
+      "WifiInfo": {
+        "type": "object",
+        "properties": {
+          "ssid": {
+            "type": "string"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "sta",
+              "ap"
+            ]
+          },
+          "connected": {
+            "type": "boolean"
+          },
+          "setup_ap": {
+            "type": "boolean",
+            "description": "True while captive-portal soft-AP is active."
+          },
+          "rssi": {
+            "type": "integer"
+          },
+          "ip": {
+            "type": "string"
+          }
+        }
+      },
+      "WifiPutRequest": {
+        "type": "object",
+        "required": [
+          "ssid"
+        ],
+        "properties": {
+          "ssid": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "persist": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      },
+      "WifiPutResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "persisted": {
+            "type": "boolean"
+          },
+          "eeprom_bytes": {
+            "type": "integer"
+          },
+          "reconnect_started": {
+            "type": "boolean"
+          },
+          "reboot_scheduled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WifiScanResult": {
+        "type": "object",
+        "properties": {
+          "scanning": {
+            "type": "boolean"
+          },
+          "scan_error": {
+            "type": "boolean"
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "ssid": {
+                  "type": "string"
+                },
+                "rssi": {
+                  "type": "integer"
+                },
+                "channel": {
+                  "type": "integer"
+                },
+                "secure": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        }
+      },
+      "WifiScanInProgress": {
+        "type": "object",
+        "required": [
+          "scanning",
+          "networks"
+        ],
+        "properties": {
+          "scanning": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "networks": {
+            "type": "array",
+            "items": {},
+            "maxItems": 0
+          }
+        }
+      },
+      "PasswordPutRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "Empty string clears password protection"
+          }
+        }
+      },
+      "HttpAuthPutResponse": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/EepromOk"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "type": "boolean"
+              }
+            }
+          }
+        ]
+      },
+      "AuthLoginRequest": {
+        "type": "object",
+        "required": [
+          "password"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "HTTP API password from Settings"
+          }
+        }
+      },
+      "BalansunBackupApiAccessToken": {
+        "type": "object",
+        "required": [
+          "id",
+          "token"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 24
+          },
+          "token": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "Permanent bearer secret (64 lowercase hex)"
+          }
+        }
+      },
+      "BalansunBackupApi": {
+        "type": "object",
+        "properties": {
+          "http_api_password": {
+            "type": "string",
+            "description": "HTTP API password when LAN lockdown is enabled"
+          },
+          "access_tokens": {
+            "type": "array",
+            "maxItems": 4,
+            "items": {
+              "$ref": "#/components/schemas/BalansunBackupApiAccessToken"
+            }
+          }
+        }
+      },
+      "BalansunBackup": {
+        "type": "object",
+        "required": [
+          "backupSchemaVersion",
+          "exportedAt",
+          "config",
+          "actions",
+          "time",
+          "wifi"
+        ],
+        "properties": {
+          "backupSchemaVersion": {
+            "type": "integer",
+            "enum": [
+              1
+            ]
+          },
+          "exportedAt": {
+            "type": "string"
+          },
+          "config": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "actions": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "time": {
+            "type": "object",
+            "required": [
+              "tz",
+              "ntp1",
+              "ntp2"
+            ],
+            "properties": {
+              "tz": {
+                "type": "string"
+              },
+              "ntp1": {
+                "type": "string"
+              },
+              "ntp2": {
+                "type": "string"
+              }
+            }
+          },
+          "wifi": {
+            "type": "object",
+            "required": [
+              "ssid",
+              "password"
+            ],
+            "properties": {
+              "ssid": {
+                "type": "string"
+              },
+              "password": {
+                "type": "string"
+              }
+            }
+          },
+          "api": {
+            "$ref": "#/components/schemas/BalansunBackupApi"
+          }
+        }
+      },
+      "AuthTokenInfo": {
+        "type": "object",
+        "required": [
+          "id",
+          "label"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 255
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 24
+          }
+        }
+      },
+      "AuthTokenCreateRequest": {
+        "type": "object",
+        "properties": {
+          "label": {
+            "type": "string",
+            "maxLength": 24,
+            "description": "Optional display name (default Token N)"
+          }
+        }
+      },
+      "AuthTokenCreateResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "id",
+          "label",
+          "token"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "id": {
+            "type": "integer"
+          },
+          "label": {
+            "type": "string"
+          },
+          "token": {
+            "type": "string",
+            "description": "64-char hex bearer secret (shown once)"
+          }
+        }
+      },
+      "AuthLoginResponse": {
+        "type": "object",
+        "required": [
+          "ok"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "token": {
+            "type": "string",
+            "description": "64-character hex session token (present when auth is enabled)"
+          }
+        }
+      },
+      "ArduinoOtaInfo": {
+        "type": "object",
+        "properties": {
+          "password_set": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ArduinoOtaPutResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "eeprom_bytes": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "FirmwareOtaResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "FleetExport": {
+        "type": "object",
+        "additionalProperties": true,
+        "properties": {
+          "schema_version": {
+            "type": "string"
+          },
+          "exported_at": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "config": {
+            "$ref": "#/components/schemas/RouterConfig"
+          },
+          "actions": {
+            "$ref": "#/components/schemas/ActionsConfigEnvelope"
+          },
+          "signature": {
+            "type": "string"
+          }
+        }
+      },
+      "FleetImportRequest": {
+        "type": "object",
+        "required": [
+          "signature"
+        ],
+        "properties": {
+          "schema_version": {
+            "type": "string"
+          },
+          "exported_at": {
+            "type": "string"
+          },
+          "device_name": {
+            "type": "string"
+          },
+          "config": {
+            "$ref": "#/components/schemas/RouterConfig"
+          },
+          "actions": {
+            "$ref": "#/components/schemas/ActionsConfigEnvelope"
+          },
+          "signature": {
+            "type": "string"
+          },
+          "dry_run": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "FleetImportResponse": {
+        "type": "object",
+        "required": [
+          "ok",
+          "dry_run"
+        ],
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "dry_run": {
+            "type": "boolean"
+          }
+        }
+      },
+      "MqttActionResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      },
+      "MqttTestRequest": {
+        "type": "object",
+        "properties": {
+          "mqtt_ip": {
+            "type": "string"
+          },
+          "mqtt_port": {
+            "type": "integer"
+          },
+          "mqtt_user": {
+            "type": "string"
+          },
+          "mqtt_password": {
+            "type": "string"
+          },
+          "mqtt_device_name": {
+            "type": "string"
+          }
+        }
+      },
+      "MqttTestResponse": {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean"
+          },
+          "mqtt_connected": {
+            "type": "boolean"
+          },
+          "error_code": {
+            "type": "integer"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

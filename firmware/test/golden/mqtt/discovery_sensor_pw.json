@@ -1,0 +1,5 @@
+{
+  "name": "BALANSUN_TEST Pw",
+  "state_topic": "homeassistant/BALANSUN_TEST_state",
+  "unique_id": "BALANSUN_TEST_Pw"
+}

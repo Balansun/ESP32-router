@@ -1,0 +1,15 @@
+{
+  "description": "Nested keys on GET /api/v1/state status object.",
+  "parent": "status",
+  "required_keys": [
+    "source_health",
+    "source_stale",
+    "regulation_active",
+    "site_cap_active",
+    "mqtt_connected",
+    "device_lifecycle",
+    "regulation_motion",
+    "output_suspend",
+    "triac_sync_state"
+  ]
+}

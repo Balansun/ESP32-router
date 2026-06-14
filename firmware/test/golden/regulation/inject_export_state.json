@@ -1,0 +1,5 @@
+{
+  "triac_open_percent_min": 5,
+  "triac_open_percent_max": 80,
+  "note": "Example band after export inject on regulating device"
+}

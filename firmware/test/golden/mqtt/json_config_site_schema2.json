@@ -1,0 +1,9 @@
+{
+  "description": "MQTT site/config/set payload (schema_version 2)",
+  "topic_suffix": "site/config/set",
+  "example": {
+    "schema_version": 2,
+    "max_routed_w": 5000,
+    "triac_off_when_source_stale": true
+  }
+}

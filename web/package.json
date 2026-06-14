@@ -1,0 +1,39 @@
+{
+  "name": "balansun-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Mobile-first SPA UI for Balansun ESP32 firmware (Vite).",
+  "license": "EUPL-1.2",
+  "scripts": {
+    "sync:brand": "node ../scripts/sync-brand-assets.mjs && node scripts/generate-pwa-icons.mjs",
+    "dev": "npm run sync:brand && vite",
+    "dev:representation": "node scripts/dev-representation.mjs",
+    "dev:representation:vite": "npm run sync:brand && vite --mode representation",
+    "build": "npm run sync:brand && vite build",
+    "build:firmware": "npm run sync:brand && vite build",
+    "preview": "vite preview --port 4173",
+    "preview:representation": "vite preview --port 4173 --open /representation.html",
+    "typecheck": "tsc -p tsconfig.typecheck.json --noEmit",
+    "generate:field-help-docs": "tsx scripts/generate-field-help-docs.ts",
+    "pretest": "npm run generate:field-help-docs",
+    "pretest:coverage": "npm run generate:field-help-docs",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.2",
+    "@vitest/coverage-v8": "^2.1.9",
+    "happy-dom": "^20.0.10",
+    "sharp": "^0.33.5",
+    "terser": "^5.36.0",
+    "tsx": "^4.22.3",
+    "typescript": "^5.6.3",
+    "vite": "^5.4.10",
+    "vite-plugin-singlefile": "^2.0.3",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "uplot": "^1.6.31"
+  }
+}

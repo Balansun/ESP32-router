@@ -1,0 +1,28 @@
+{
+  "source": "JsyMk194",
+  "source_data": "JsyMk194",
+  "date_valid": true,
+  "voltage_house_v": 230,
+  "current_house_a": 1.52,
+  "pf_house": 0.97,
+  "voltage_second_v": 230,
+  "current_second_a": 6.13,
+  "pf_second": 0.99,
+  "frequency_hz": 50,
+  "diagnostics": {
+    "active_source": "JsyMk194",
+    "meter": "JsyMk194",
+    "poll_period_ms": 1000,
+    "last_poll_ms_ago": 42,
+    "last_poll_ok": true,
+    "last_error": "",
+    "mains_frequency_hz": 50,
+    "mains_frequency_source": "fallback",
+    "health_score": 100,
+    "health_score_factors": {
+      "freshness": 40,
+      "poll_ok": 40,
+      "streak": 20
+    }
+  }
+}

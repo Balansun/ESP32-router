@@ -1,0 +1,8 @@
+{
+  "steps": [
+    { "active_import_w": 3000, "active_export_w": 0, "dwell_s": 1.0 },
+    { "active_import_w": 2000, "active_export_w": 500, "dwell_s": 1.0 },
+    { "active_import_w": 500, "active_export_w": 1500, "dwell_s": 1.0 },
+    { "active_import_w": 80, "active_export_w": 3500, "dwell_s": 1.5 }
+  ]
+}

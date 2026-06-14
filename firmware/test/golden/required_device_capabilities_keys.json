@@ -1,0 +1,13 @@
+{
+  "description": "Nested keys expected on GET /api/v1/device capabilities object.",
+  "parent": "capabilities",
+  "required_keys": [
+    "tier",
+    "psram",
+    "hist_max_points",
+    "config_export_max_bytes",
+    "full_config_export",
+    "product_profile",
+    "firmware_capabilities"
+  ]
+}

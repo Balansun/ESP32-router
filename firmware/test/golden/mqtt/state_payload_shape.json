@@ -1,0 +1,10 @@
+{
+  "required_keys": [
+    "device_uid",
+    "source",
+    "house_net_power_w",
+    "house_active_import_w",
+    "triac_open_percent",
+    "temperature_c"
+  ]
+}

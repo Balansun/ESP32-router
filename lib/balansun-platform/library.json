@@ -1,0 +1,17 @@
+{
+  "name": "Balansun-Platform",
+  "version": "0.1.0",
+  "description": "Shared ESP32 Wi-Fi, soft-AP, captive portal DNS, and HTTP server helpers for Balansun Router",
+  "keywords": "balansun, wifi, http, captive-portal",
+  "license": "EUPL-1.2",
+  "frameworks": "arduino",
+  "platforms": "espressif32",
+  "headers": [
+    "balansun/platform/captive_dns.h",
+    "balansun/platform/captive_portal.h",
+    "balansun/platform/http_listener.h",
+    "balansun/platform/http_plain_body.h",
+    "balansun/platform/http_service.h",
+    "balansun/platform/wifi_stack.h"
+  ]
+}

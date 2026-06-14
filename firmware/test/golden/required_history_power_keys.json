@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/history/power",
+  "required_keys": ["source", "window", "max_points"]
+}

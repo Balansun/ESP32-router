@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/history/energy/daily",
+  "required_keys": ["delta_wh_per_day"]
+}

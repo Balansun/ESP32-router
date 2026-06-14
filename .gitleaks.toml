@@ -1,0 +1,21 @@
+title = "ESP32-router gitleaks"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Test fixtures, golden captures, schema field names, OpenAPI password keys, EUPL"
+paths = [
+  '''firmware/test/golden/''',
+  '''firmware/test/native/''',
+  '''firmware/test/hil/''',
+  '''web/test/''',
+  '''openapi/''',
+  '''web/test/fixtures/''',
+]
+regexes = [
+  '''"password"\s*:''',
+  '''http_api_password''',
+  '''mqtt_password''',
+  '''EUPL-1\.2''',
+]

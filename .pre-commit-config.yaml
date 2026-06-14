@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.21.2
+    hooks:
+      - id: gitleaks
+        args: ["--config", ".gitleaks.toml"]
+
+  - repo: local
+    hooks:
+      - id: check-naming
+        name: check_naming.sh
+        entry: scripts/check_naming.sh
+        language: script
+        pass_filenames: false
+      - id: check-tracked-assets
+        name: check_tracked_assets.sh
+        entry: scripts/check_tracked_assets.sh
+        language: script
+        pass_filenames: false
+      - id: web-typecheck
+        name: web typecheck
+        entry: bash -c 'cd web && npm run typecheck'
+        language: system
+        files: ^web/
+        pass_filenames: false

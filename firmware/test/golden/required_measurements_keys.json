@@ -1,0 +1,4 @@
+{
+  "description": "Top-level keys on GET /api/v1/measurements",
+  "required_keys": ["house", "second", "raw_meter"]
+}

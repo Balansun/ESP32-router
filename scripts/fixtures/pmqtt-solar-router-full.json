@@ -1,0 +1,84 @@
+{
+  "source": "Pmqtt",
+  "pmqtt_topic": "solar_router/solar_router_state",
+  "pmqtt_schema": "Pw,Pf",
+  "pmqtt_bindings": [
+    {
+      "metric": "house.signed_net_w",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Puissance_M",
+      "enabled": true
+    },
+    {
+      "metric": "house.apparent_import_va",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "PuissanceS_M",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.voltage_house_v",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Tension_M",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.current_house_a",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Intensite_M",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.pf_house",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "PowerFactor_M",
+      "enabled": true
+    },
+    {
+      "metric": "second.active_import_w",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "PuissanceS_T",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.voltage_second_v",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Tension_T",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.current_second_a",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Intensite_T",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.pf_second",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "PowerFactor_T",
+      "enabled": true
+    },
+    {
+      "metric": "raw_meter.freq_hz",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "Frequence",
+      "enabled": true
+    },
+    {
+      "metric": "triac.open_percent",
+      "topic": "solar_router/solar_router_state",
+      "format": "json",
+      "path": "OuvertureTriac",
+      "enabled": true
+    }
+  ]
+}

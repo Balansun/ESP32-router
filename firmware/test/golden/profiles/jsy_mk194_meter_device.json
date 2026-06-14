@@ -1,0 +1,13 @@
+{
+  "capabilities": {
+    "product_profile": "jsy_mk194_meter",
+    "firmware_capabilities": {
+      "surplus_regulation": false,
+      "triac": false,
+      "multi_action": false,
+      "source_test_inject": false,
+      "meter_pack": "jsy_mk194",
+      "meters": ["JsyMk194"]
+    }
+  }
+}

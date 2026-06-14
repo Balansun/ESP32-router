@@ -1,0 +1,207 @@
+/* Design tokens — single source of truth for spacing, color, typography. */
+
+:root {
+  --app-max: 1100px;
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --hit: 44px;
+
+  --fz-xs: clamp(0.72rem, 0.7rem + 0.1vw, 0.78rem);
+  --fz-sm: clamp(0.82rem, 0.78rem + 0.2vw, 0.92rem);
+  --fz-base: clamp(0.95rem, 0.9rem + 0.3vw, 1.05rem);
+  --fz-md: clamp(1.05rem, 0.98rem + 0.4vw, 1.2rem);
+  --fz-lg: clamp(1.25rem, 1.1rem + 0.7vw, 1.6rem);
+  --fz-xl: clamp(1.6rem, 1.3rem + 1.2vw, 2.2rem);
+  --fz-2xl: clamp(2rem, 1.4rem + 2.4vw, 3rem);
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+
+  --motion-fast: 120ms;
+  --motion-base: 200ms;
+  --ease-out: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.06), 0 1px 1px oklch(0% 0 0 / 0.04);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.1), 0 2px 4px oklch(0% 0 0 / 0.06);
+  --shadow-lg: 0 12px 32px oklch(0% 0 0 / 0.18);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Light theme (default). */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --c-bg: oklch(98% 0.005 250);
+  --c-bg-elev: oklch(100% 0 0);
+  --c-bg-sunk: oklch(95% 0.008 250);
+  --c-surface: oklch(100% 0 0);
+  --c-surface-1: var(--c-surface);
+  --c-surface-2: oklch(96.5% 0.006 250);
+  --c-border: oklch(88% 0.01 250);
+  --c-border-strong: oklch(78% 0.015 250);
+  --c-fg: oklch(20% 0.02 260);
+  --c-fg-muted: oklch(45% 0.015 260);
+  --c-text-muted: var(--c-fg-muted);
+  --c-fg-faint: oklch(60% 0.012 260);
+  --c-link: oklch(52% 0.18 260);
+  --c-focus: oklch(60% 0.2 250);
+
+  --c-accent: oklch(60% 0.18 250);
+  --c-accent-fg: oklch(99% 0 0);
+  --c-on-accent: var(--c-accent-fg);
+  --c-accent-soft: oklch(94% 0.04 250);
+  --pwa-theme-color: #f5f6f9;
+  --pwa-background-color: #f5f6f9;
+
+  --c-import: oklch(60% 0.18 30);
+  --c-import-soft: oklch(95% 0.04 30);
+  --c-export: oklch(62% 0.16 150);
+  --c-export-soft: oklch(94% 0.05 150);
+  --c-apparent: oklch(70% 0.15 200);
+  --c-apparent-soft: oklch(94% 0.04 200);
+  --c-energy: oklch(75% 0.15 80);
+  --c-energy-soft: oklch(96% 0.05 85);
+  --c-temp: oklch(70% 0.16 140);
+  --c-temp-soft: oklch(95% 0.05 140);
+  --c-warn: oklch(75% 0.17 75);
+  --c-danger: oklch(58% 0.2 25);
+  --c-ok: oklch(62% 0.15 150);
+  --c-info: oklch(60% 0.16 230);
+
+  --c-chart-house-p: oklch(58% 0.2 30);
+  --c-chart-triac-p: oklch(58% 0.17 150);
+  --c-chart-house-s: oklch(58% 0.16 240);
+  --c-chart-triac-s: oklch(58% 0.18 300);
+
+  --c-tariff-bleu: oklch(55% 0.2 250);
+  --c-tariff-blanc: oklch(85% 0.02 250);
+  --c-tariff-rouge: oklch(58% 0.22 25);
+  --c-tariff-creuse: oklch(62% 0.16 150);
+  --c-tariff-pleine: oklch(62% 0.18 60);
+
+  --grid-line: oklch(85% 0.01 250 / 0.6);
+  --grid-axis: oklch(60% 0.01 250 / 0.8);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --c-bg: oklch(16% 0.02 260);
+    --c-bg-elev: oklch(20% 0.02 260);
+    --c-bg-sunk: oklch(13% 0.02 260);
+    --c-surface: oklch(22% 0.022 260);
+    --c-surface-1: var(--c-surface);
+    --c-surface-2: oklch(26% 0.025 260);
+    --c-border: oklch(32% 0.02 260);
+    --c-border-strong: oklch(45% 0.025 260);
+    --c-fg: oklch(96% 0.01 250);
+    --c-fg-muted: oklch(75% 0.015 250);
+    --c-text-muted: var(--c-fg-muted);
+    --c-fg-faint: oklch(60% 0.015 250);
+    --c-link: oklch(75% 0.13 250);
+    --c-focus: oklch(75% 0.18 250);
+
+    --c-accent: oklch(70% 0.16 250);
+    --c-accent-fg: oklch(15% 0.02 260);
+    --c-on-accent: var(--c-accent-fg);
+    --c-accent-soft: oklch(30% 0.06 250);
+    --pwa-theme-color: #1c1f28;
+    --pwa-background-color: #1c1f28;
+
+    --c-import: oklch(70% 0.18 30);
+    --c-import-soft: oklch(28% 0.07 30);
+    --c-export: oklch(72% 0.16 150);
+    --c-export-soft: oklch(28% 0.07 150);
+    --c-apparent: oklch(75% 0.13 200);
+    --c-apparent-soft: oklch(28% 0.06 200);
+    --c-energy: oklch(80% 0.15 85);
+    --c-energy-soft: oklch(30% 0.07 85);
+    --c-temp: oklch(75% 0.15 140);
+    --c-temp-soft: oklch(28% 0.07 140);
+    --c-warn: oklch(80% 0.16 75);
+    --c-danger: oklch(70% 0.2 25);
+    --c-ok: oklch(72% 0.15 150);
+    --c-info: oklch(72% 0.15 230);
+
+    --c-chart-house-p: oklch(72% 0.19 30);
+    --c-chart-triac-p: oklch(72% 0.17 150);
+    --c-chart-house-s: oklch(72% 0.15 240);
+    --c-chart-triac-s: oklch(72% 0.17 300);
+
+    --grid-line: oklch(40% 0.015 260 / 0.6);
+    --grid-axis: oklch(70% 0.015 260 / 0.8);
+
+    --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
+    --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.5);
+    --shadow-lg: 0 12px 32px oklch(0% 0 0 / 0.6);
+  }
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --c-bg: oklch(16% 0.02 260);
+  --c-bg-elev: oklch(20% 0.02 260);
+  --c-bg-sunk: oklch(13% 0.02 260);
+  --c-surface: oklch(22% 0.022 260);
+  --c-surface-1: var(--c-surface);
+  --c-surface-2: oklch(26% 0.025 260);
+  --c-border: oklch(32% 0.02 260);
+  --c-border-strong: oklch(45% 0.025 260);
+  --c-fg: oklch(96% 0.01 250);
+  --c-fg-muted: oklch(75% 0.015 250);
+  --c-text-muted: var(--c-fg-muted);
+  --c-fg-faint: oklch(60% 0.015 250);
+  --c-link: oklch(75% 0.13 250);
+  --c-focus: oklch(75% 0.18 250);
+
+  --c-accent: oklch(70% 0.16 250);
+  --c-accent-fg: oklch(15% 0.02 260);
+  --c-on-accent: var(--c-accent-fg);
+  --c-accent-soft: oklch(30% 0.06 250);
+  --pwa-theme-color: #1c1f28;
+  --pwa-background-color: #1c1f28;
+
+  --c-import: oklch(70% 0.18 30);
+  --c-import-soft: oklch(28% 0.07 30);
+  --c-export: oklch(72% 0.16 150);
+  --c-export-soft: oklch(28% 0.07 150);
+  --c-apparent: oklch(75% 0.13 200);
+  --c-apparent-soft: oklch(28% 0.06 200);
+  --c-energy: oklch(80% 0.15 85);
+  --c-energy-soft: oklch(30% 0.07 85);
+  --c-temp: oklch(75% 0.15 140);
+  --c-temp-soft: oklch(28% 0.07 140);
+  --c-warn: oklch(80% 0.16 75);
+  --c-danger: oklch(70% 0.2 25);
+  --c-ok: oklch(72% 0.15 150);
+  --c-info: oklch(72% 0.15 230);
+
+  --c-chart-house-p: oklch(72% 0.19 30);
+  --c-chart-triac-p: oklch(72% 0.17 150);
+  --c-chart-house-s: oklch(72% 0.15 240);
+  --c-chart-triac-s: oklch(72% 0.17 300);
+
+  --grid-line: oklch(40% 0.015 260 / 0.6);
+  --grid-axis: oklch(70% 0.015 260 / 0.8);
+
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.4);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 0.5);
+  --shadow-lg: 0 12px 32px oklch(0% 0 0 / 0.6);
+}

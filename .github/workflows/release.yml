@@ -1,0 +1,238 @@
+name: Release
+
+on:
+  workflow_call:
+    inputs:
+      tag_name:
+        description: Git tag for the release (e.g. v0.3.6-nightly.abc1234)
+        required: true
+        type: string
+      prerelease:
+        description: Mark as GitHub prerelease
+        type: boolean
+        default: true
+      target_sha:
+        description: Commit SHA to build and attach the release to
+        required: true
+        type: string
+  workflow_dispatch:
+    inputs:
+      draft:
+        description: Mark GitHub Release as draft (ignored on artifact-only runs)
+        type: boolean
+        default: false
+      prerelease:
+        description: Mark GitHub Release as prerelease (tags v*-* auto-detect)
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+# Callable from firmware.yml on push: github.event_name stays "push", not workflow_call.
+# Detect CI pre-releases via inputs.tag_name / inputs.target_sha (see actions/runner#3146).
+
+jobs:
+  # Native tests use platform=native; never share a workspace with ESP32 firmware builds.
+  host-checks:
+    if: inputs.tag_name != '' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_sha != '' && inputs.target_sha || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tools
+        run: |
+          pip install 'platformio>=6.1'
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ripgrep gcovr
+      - name: Generate profile matrix and firmware catalog
+        run: python3 scripts/generate_profile_test_matrix.py
+      - name: Host contract checks
+        run: ./scripts/ci_host_checks.sh
+
+  build-release:
+    needs: host-checks
+    if: inputs.tag_name != '' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.target_sha != '' && inputs.target_sha || github.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install PlatformIO
+        run: pip install 'platformio>=6.1'
+      - name: Generate install country data
+        run: node scripts/generate-install-countries.mjs
+      - name: Generate profile matrix and firmware catalog
+        run: python3 scripts/generate_profile_test_matrix.py
+      - name: Install web deps
+        run: npm ci
+        working-directory: web
+      - name: Resolve firmware version and release tag
+        run: |
+          set -eu
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            tag="${{ inputs.tag_name }}"
+            echo "BALANSUN_FIRMWARE_VERSION=${tag#v}" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG_NAME=${tag}" >> "$GITHUB_ENV"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            echo "BALANSUN_FIRMWARE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+            echo "RELEASE_TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
+          fi
+      - name: Embed OpenAPI for firmware build
+        run: |
+          pip install pyyaml
+          python3 scripts/embed_openapi.py
+      - name: Build all product variant firmware
+        env:
+          VITE_DOCS_SITE_ORIGIN: https://balansun.clouded.fr
+        run: |
+          pio platform install espressif32@6.4.0
+          rm -rf .pio
+          ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join('-e '+e for e in m['all_variant_envs']))")
+          # shellcheck disable=SC2086
+          pio run $ENVS
+      - name: Verify embedded firmware version (tag / main pre-release builds)
+        if: env.BALANSUN_FIRMWARE_VERSION != ''
+        run: |
+          set -eu
+          want="${BALANSUN_FIRMWARE_VERSION}"
+          if ! strings .pio/build/wroom32/firmware.elf | grep -qF "$want"; then
+            echo "::error::Built firmware does not contain Version string $want"
+            exit 1
+          fi
+          echo "OK: firmware embeds Version=$want"
+      - name: Flash and RAM size report
+        run: |
+          mkdir -p release
+          {
+            echo "# Firmware size report"
+            echo ""
+            echo "## wroom32 (production full)"
+            pio run -e wroom32 --target size
+            echo ""
+            echo "## esp32s3 (alternate full)"
+            pio run -e esp32s3 --target size
+            echo ""
+          } | tee release/size-report.txt
+      - name: Package artifacts and checksums
+        run: |
+          set -eu
+          if [ -n "${BALANSUN_FIRMWARE_VERSION:-}" ]; then
+            VERSION="${BALANSUN_FIRMWARE_VERSION}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(grep '#define Version' firmware/core/balansun_board.h | sed -n 's/.*"\([^"]*\)".*/\1/p')"
+          fi
+          mkdir -p release
+          package_board() {
+            local env="$1"
+            local build=".pio/build/${env}"
+            local prefix="balansun-${VERSION}-${env}"
+            if [ -f "$build/firmware.bin" ]; then
+              cp "$build/firmware.bin" "release/${prefix}-firmware.bin"
+            else
+              echo "Missing $build/firmware.bin" >&2
+              exit 1
+            fi
+            if [ -f "$build/bootloader.bin" ]; then
+              cp "$build/bootloader.bin" "release/${prefix}-bootloader.bin"
+            fi
+            if [ -f "$build/partitions.bin" ]; then
+              cp "$build/partitions.bin" "release/${prefix}-partitions.bin"
+            fi
+          }
+          ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join(m['all_variant_envs']))")
+          for env in $ENVS; do
+            package_board "$env"
+          done
+          cp web/public/firmware-catalog.json release/firmware-catalog.json
+          (cd release && sha256sum ./*.bin) > release/SHA256SUMS.txt
+          cat release/SHA256SUMS.txt
+          ls -la release/
+      - name: Upload workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: balansun-${{ env.RELEASE_TAG_NAME || github.ref_name }}
+          path: release/
+      - name: Write release notes
+        if: env.RELEASE_TAG_NAME != ''
+        run: |
+          set -eu
+          tag="${RELEASE_TAG_NAME}"
+          ./.ci/release_notes_template.sh "${tag}" > RELEASE_BODY.md
+          if [[ "${tag}" == *"-nightly."* ]]; then
+            {
+              echo ""
+              echo "> Automated **nightly** from \`main\` after Firmware CI (\`${{ inputs.target_sha != '' && inputs.target_sha || github.sha }}\`)."
+            } >> RELEASE_BODY.md
+          fi
+          {
+            echo ""
+            echo "## Artifacts"
+            echo ""
+            echo "One firmware per product declination (meter / router / Warm SKU). See \`firmware-catalog.json\` in this release."
+            echo ""
+            echo "| Family | Example env | Use |"
+            echo "|--------|-------------|-----|"
+            echo "| Full router (all meters) | \`wroom32\` | Default multi-source hardware |"
+            echo "| Single-meter router | \`jsy_mk194_router\` | Stripped router for one meter pack |"
+            echo "| Meter gateway | \`linky_meter\` | Measure-only ESP |"
+            echo "| ESP32-S3 full | \`esp32s3\` | Alternate board; **do not** flash on WROOM PCB |"
+            echo ""
+            echo "Flashing checklist: https://balansun.clouded.fr/en/getting-started/"
+            echo ""
+            echo "## SHA-256"
+            echo '```'
+            cat release/SHA256SUMS.txt
+            echo '```'
+            if [ -f release/size-report.txt ]; then
+              echo ""
+              echo "## Size report"
+              echo '```'
+              cat release/size-report.txt
+              echo '```'
+            fi
+          } >> RELEASE_BODY.md
+      - name: Skip publish when release already exists
+        if: inputs.tag_name != ''
+        id: existing_release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          tag="${{ inputs.tag_name }}"
+          if gh release view "${tag}" >/dev/null 2>&1; then
+            echo "Release ${tag} already exists — skipping publish (idempotent re-run)."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create GitHub Release
+        if: env.RELEASE_TAG_NAME != '' && (inputs.tag_name == '' || steps.existing_release.outputs.skip != 'true')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.RELEASE_TAG_NAME }}
+          target_commitish: ${{ inputs.target_sha != '' && inputs.target_sha || github.sha }}
+          files: release/*
+          fail_on_unmatched_files: false
+          generate_release_notes: true
+          body_path: RELEASE_BODY.md
+          draft: ${{ github.event_name == 'workflow_dispatch' && inputs.draft == true }}
+          prerelease: >-
+            ${{ (inputs.tag_name != '' && inputs.prerelease) ||
+            (github.event_name == 'workflow_dispatch' && inputs.prerelease == true) ||
+            (startsWith(github.ref, 'refs/tags/') && contains(github.ref_name, '-')) }}
+          make_latest: false

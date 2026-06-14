@@ -1,0 +1,121 @@
+{
+  "version": 1,
+  "notdef": {
+    "id": "notdef",
+    "wire": "NotDef",
+    "enable_macro": "BALANSUN_ENABLE_SOURCE_NOTDEF",
+    "driver": "bench_sim_meter.cpp",
+    "logic": [],
+    "transport": "bench",
+    "spa_visible": false
+  },
+  "packs": [
+    {
+      "id": "jsy_mk194",
+      "wire": "JsyMk194",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_JSY_MK194",
+      "pack_macro": "BALANSUN_METER_PACK_JSY_MK194",
+      "driver": "jsy_mk194t_meter.cpp",
+      "logic": ["jsy_mk194_logic.cpp"],
+      "transport": "serial"
+    },
+    {
+      "id": "jsy_mk333",
+      "wire": "JsyMk333",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_JSY_MK333",
+      "pack_macro": "BALANSUN_METER_PACK_JSY_MK333",
+      "driver": "jsy_mk333_meter.cpp",
+      "logic": ["jsy_mk333_logic.cpp"],
+      "transport": "serial"
+    },
+    {
+      "id": "analog",
+      "wire": "Analog",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_ANALOG",
+      "pack_macro": "BALANSUN_METER_PACK_ANALOG",
+      "driver": "uxi_probe_meter.cpp",
+      "logic": [],
+      "transport": "adc"
+    },
+    {
+      "id": "linky",
+      "wire": "Linky",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_LINKY",
+      "pack_macro": "BALANSUN_METER_PACK_LINKY",
+      "driver": "linky_meter.cpp",
+      "logic": ["linky_tic_logic.cpp", "tempo_rte_logic.cpp"],
+      "sidecars": ["tempo_rte.cpp"],
+      "transport": "serial"
+    },
+    {
+      "id": "enphase",
+      "wire": "Enphase",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_ENPHASE",
+      "pack_macro": "BALANSUN_METER_PACK_ENPHASE",
+      "driver": "enphase_envoy_meter.cpp",
+      "logic": [],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "https"
+    },
+    {
+      "id": "shelly_em",
+      "wire": "ShellyEm",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SHELLY_EM",
+      "pack_macro": "BALANSUN_METER_PACK_SHELLY_EM",
+      "driver": "shelly_em_meter.cpp",
+      "logic": ["shelly_em_logic.cpp", "json_flat_meter_logic.cpp"],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "http"
+    },
+    {
+      "id": "shelly_pro",
+      "wire": "ShellyPro",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SHELLY_PRO",
+      "pack_macro": "BALANSUN_METER_PACK_SHELLY_PRO",
+      "driver": "shelly_pro_em_meter.cpp",
+      "logic": ["json_flat_meter_logic.cpp"],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "http"
+    },
+    {
+      "id": "smartg",
+      "wire": "SmartG",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_SMARTG",
+      "pack_macro": "BALANSUN_METER_PACK_SMARTG",
+      "driver": "smart_gateway_meter.cpp",
+      "logic": ["json_flat_meter_logic.cpp"],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "http"
+    },
+    {
+      "id": "homew",
+      "wire": "HomeW",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_HOMEW",
+      "pack_macro": "BALANSUN_METER_PACK_HOMEW",
+      "driver": "homewizard_meter.cpp",
+      "logic": ["json_flat_meter_logic.cpp"],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "http"
+    },
+    {
+      "id": "pmqtt",
+      "wire": "Pmqtt",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_PMqtt",
+      "pack_macro": "BALANSUN_METER_PACK_PMqtt",
+      "driver": "pmqtt_meter.cpp",
+      "logic": ["pmqtt_logic.cpp"],
+      "sidecars": ["pmqtt_bindings.cpp", "balansun_pmqtt_bindings_nvs.cpp"],
+      "transport": "mqtt"
+    },
+    {
+      "id": "balansun_peer",
+      "wire": "BalansunPeer",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_EXT",
+      "pack_macro": "BALANSUN_METER_PACK_BALANSUN_PEER",
+      "driver": "external_peer_meter.cpp",
+      "logic": ["external_peer_logic.cpp"],
+      "shared": ["balansun_lan_http_client.cpp", "balansun_http_response_logic.cpp"],
+      "transport": "http"
+    }
+  ]
+}

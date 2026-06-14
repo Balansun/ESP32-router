@@ -1,0 +1,33 @@
+{
+  "device_uid": "aabbccddeeff",
+  "source": "JsyMk194",
+  "source_data": "JsyMk194",
+  "router_name": "Balansun",
+  "firmware_version": "0.1.0",
+  "probe_second_name": "Second channel",
+  "probe_house_name": "House metering",
+  "ext_peer_ip": "0.0.0.0",
+  "ext_peer_port": 80,
+  "ext_peer_path": "/api/v1/measurements",
+  "temperature_label": "temperature_c",
+  "firmware": {},
+  "chip": {
+    "psram_size": 0,
+    "psram_free": 0
+  },
+  "capabilities": {
+    "tier": "constrained",
+    "psram": false,
+    "hist_max_points": 200,
+    "config_export_max_bytes": 20480,
+    "full_config_export": false,
+    "product_profile": "full_router",
+    "firmware_capabilities": {
+      "surplus_regulation": true,
+      "triac": true,
+      "multi_action": true,
+      "source_test_inject": false,
+      "meters": ["JsyMk194", "Linky"]
+    }
+  }
+}
