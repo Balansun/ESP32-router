@@ -2,7 +2,7 @@
 
 #include <cstdint>
 
-constexpr uint32_t kDs18ConversionMs = 750;
+constexpr uint32_t kDs18ConversionMs = 800;
 
 struct Ds18PollState {
   uint32_t last_request_ms = 0;
