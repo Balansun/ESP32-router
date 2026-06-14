@@ -1,10 +1,10 @@
 #include "action_node_app.h"
+#include "action_node_pins.h"
+#include "ds18b20_temperature_sensor.h"
 
-#include <balansun/ds18_poll.h>
+#include <balansun/temperature_reading.h>
 
-#include <DallasTemperature.h>
 #include <ESP8266WebServer.h>
-#include <OneWire.h>
 #include <WiFiClient.h>
 
 extern ESP8266WebServer g_server;
@@ -12,9 +12,7 @@ extern ActionNodeAppState g_state;
 
 namespace {
 
-OneWire g_one_wire(ACTION_NODE_PIN_DS18);
-DallasTemperature g_sensors(&g_one_wire);
-Ds18PollState g_ds18_poll{};
+Ds18b20TemperatureSensor g_ds18_sensor;
 
 void send_json(int code, const JsonDocument &doc) {
   String body;
@@ -217,26 +215,20 @@ void action_node_http_register_routes(void) {
 }
 
 void action_node_poll_temperature(ActionNodeAppState &state) {
-  const uint32_t now = static_cast<uint32_t>(millis());
-  if (!g_ds18_poll.pending) {
-    g_sensors.requestTemperatures();
-    ds18_poll_begin_request(g_ds18_poll, now);
+  TemperatureReading readings[1];
+  int discovered = 0;
+  const bool fresh = g_ds18_sensor.pollBusReadings(readings, 1, discovered);
+  if (!fresh || discovered <= 0) {
     return;
   }
-  if (!ds18_poll_conversion_ready(g_ds18_poll, now)) {
-    return;
-  }
-  const float c = g_sensors.getTempCByIndex(0);
-  ds18_poll_mark_read(g_ds18_poll);
-  if (c == DEVICE_DISCONNECTED_C) {
-    state.temperature_ok = false;
-  } else {
-    state.temperature_c = c;
+  if (readings[0].valid) {
+    state.temperature_c = readings[0].c;
     state.temperature_ok = true;
+  } else {
+    state.temperature_ok = false;
   }
 }
 
 void action_node_temperature_begin(void) {
-  g_sensors.begin();
-  g_sensors.setWaitForConversion(false);
+  g_ds18_sensor.setup(ACTION_NODE_PIN_DS18);
 }
