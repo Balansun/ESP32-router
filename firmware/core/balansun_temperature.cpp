@@ -4,11 +4,11 @@
 #include "balansun_globals.h"
 #include "balansun_hw_presence.h"
 #include "balansun_pin_map.h"
+#include "ds18b20_temperature_sensor.h"
 #include "mqtt_ha_discovery.h"
 #include "storage_eeprom_extension.h"
 
-#include <DallasTemperature.h>
-#include <OneWire.h>
+#include <balansun/ds18_poll.h>
 #include <esp_task_wdt.h>
 
 #include <string>
@@ -21,118 +21,19 @@ bool g_temperature_bus_active = false;
 
 namespace {
 
-OneWire *g_one_wire = nullptr;
-DallasTemperature *g_ds18b20 = nullptr;
-int g_one_wire_pin = -1;
-unsigned long g_conv_requested_ms = 0;
-int g_cached_device_count = -1;
-unsigned long g_last_device_scan_ms = 0;
+Ds18b20TemperatureSensor g_ds18_sensor;
 
-constexpr unsigned long kDs18b20ConvMs = 800UL;
-constexpr unsigned long kDeviceScanIntervalMs = 30000UL;
-constexpr unsigned long kDeviceScanIdleMs = 5000UL;
-
-void reset_poll_state() {
-  g_conv_requested_ms = 0;
-  g_cached_device_count = -1;
-  g_last_device_scan_ms = 0;
-}
-
-void destroy_bus() {
-  delete g_ds18b20;
-  delete g_one_wire;
-  g_ds18b20 = nullptr;
-  g_one_wire = nullptr;
-  g_one_wire_pin = -1;
-  g_temperature_bus_active = false;
-  reset_poll_state();
-}
-
-void ensure_bus() {
-  if (!balansun_temperature_bus_should_run()) {
-    destroy_bus();
-    return;
-  }
-  const int pin = balansun_temperature_effective_gpio();
-  if (pin < 0) {
-    destroy_bus();
-    return;
-  }
-  if (g_one_wire && g_one_wire_pin == pin) {
-    g_temperature_bus_active = true;
-    return;
-  }
-  destroy_bus();
-  g_one_wire_pin = pin;
-  g_one_wire = new OneWire(pin);
-  g_ds18b20 = new DallasTemperature(g_one_wire);
-  g_ds18b20->begin();
-  g_ds18b20->setWaitForConversion(false);
-  g_one_wire->reset();
-  g_cached_device_count = g_ds18b20->getDeviceCount();
-  g_last_device_scan_ms = millis();
-  if (g_cached_device_count > 0) {
-    g_ds18b20->requestTemperatures();
-    g_conv_requested_ms = g_last_device_scan_ms;
-  }
-  g_temperature_bus_active = true;
-}
-
-bool poll_bus_readings(BalansunTempBusReading out[kBalansunTempMaxSensors], int &discovered) {
-  discovered = 0;
+void mapReadingsToSlots(const TemperatureReading *readings, int count) {
+  BalansunTempBusReading bus[kBalansunTempMaxSensors];
   for (int i = 0; i < kBalansunTempMaxSensors; i++) {
-    out[i] = {};
-  }
-  if (!g_ds18b20) return false;
-  esp_task_wdt_reset();
-
-  const unsigned long now = millis();
-  if (g_conv_requested_ms != 0) {
-    if ((now - g_conv_requested_ms) < kDs18b20ConvMs) {
-      return false;
-    }
-    const int count = g_cached_device_count > 0 ? g_cached_device_count : 0;
-    discovered = count > kBalansunTempMaxSensors ? kBalansunTempMaxSensors : count;
-    DeviceAddress addr;
-    for (int i = 0; i < discovered; i++) {
-      const float c = g_ds18b20->getTempCByIndex(i);
-      out[i].c = c;
-      out[i].valid = balansun_temp_logic_is_valid_c(c);
-      if (g_ds18b20->getAddress(addr, i)) {
-        uint64_t packed = 0;
-        for (int b = 0; b < 8; b++) {
-          packed = (packed << 8) | addr[b];
-        }
-        out[i].address = packed;
-      }
-    }
-    g_conv_requested_ms = 0;
-    esp_task_wdt_reset();
-  }
-
-  const unsigned long scan_interval =
-      (g_cached_device_count <= 0) ? kDeviceScanIdleMs : kDeviceScanIntervalMs;
-  if (g_cached_device_count < 0 || (now - g_last_device_scan_ms) >= scan_interval) {
-    if (g_one_wire) g_one_wire->reset();
-    const int prev_count = g_cached_device_count;
-    g_cached_device_count = g_ds18b20->getDeviceCount();
-    g_last_device_scan_ms = now;
-    esp_task_wdt_reset();
-    if (g_cached_device_count > 0 && prev_count <= 0 && g_conv_requested_ms == 0) {
-      g_ds18b20->requestTemperatures();
-      g_conv_requested_ms = now;
-      return false;
+    bus[i] = {};
+    if (i < count) {
+      bus[i].c = readings[i].c;
+      bus[i].valid = readings[i].valid;
+      bus[i].address = readings[i].address;
     }
   }
-  if (g_cached_device_count <= 0) {
-    return discovered > 0;
-  }
-
-  if (g_conv_requested_ms == 0) {
-    g_ds18b20->requestTemperatures();
-    g_conv_requested_ms = now;
-  }
-  return discovered > 0;
+  balansun_temp_logic_map_bus_to_slots(bus, count, temperatureSlots, g_temperature_slot_states);
 }
 
 }  // namespace
@@ -174,8 +75,11 @@ bool balansun_temperature_bus_should_run() {
 void balansun_temperature_service(unsigned long now_ms) {
   if (!balansun_temperature_bus_should_run()) return;
   static unsigned long s_last_idle_poll_ms = 0;
-  if (g_conv_requested_ms != 0) {
-    if ((now_ms - g_conv_requested_ms) >= kDs18b20ConvMs) {
+  if (g_ds18_sensor.hasPendingConversion()) {
+    Ds18PollState pending{};
+    pending.last_request_ms = g_ds18_sensor.conversionRequestedMs();
+    pending.pending = true;
+    if (ds18_poll_conversion_ready(pending, static_cast<uint32_t>(now_ms))) {
       balansun_temperature_poll();
     }
     return;
@@ -186,37 +90,51 @@ void balansun_temperature_service(unsigned long now_ms) {
   }
 }
 
-void balansun_temperature_invalidate_bus() {
-  destroy_bus();
-}
+void balansun_temperature_invalidate_bus() { g_ds18_sensor.invalidate(); }
 
 void balansun_temperature_poll() {
   esp_task_wdt_reset();
-  BalansunTempBusReading bus[kBalansunTempMaxSensors];
+  TemperatureReading readings[kBalansunTempMaxSensors];
   if (!balansun_temperature_bus_should_run()) {
-    destroy_bus();
+    g_ds18_sensor.invalidate();
     g_temperature_discovered_count = 0;
-    balansun_temp_logic_map_bus_to_slots(bus, 0, temperatureSlots, g_temperature_slot_states);
+    g_temperature_bus_active = false;
+    mapReadingsToSlots(readings, 0);
     temperature = kBalansunTempInvalidC;
     balansun_hw_presence_on_temp_poll(false);
     return;
   }
-  ensure_bus();
+  const int pin = balansun_temperature_effective_gpio();
+  g_ds18_sensor.setup(pin);
+  g_temperature_bus_active = true;
   int discovered = 0;
-  const bool fresh_readings = poll_bus_readings(bus, discovered);
-  if (g_conv_requested_ms != 0 && !fresh_readings) {
-    return;
-  }
-  if (!fresh_readings && discovered == 0) {
+  const bool fresh = g_ds18_sensor.pollBusReadings(readings, kBalansunTempMaxSensors, discovered);
+  if (!fresh && discovered == 0) {
     balansun_hw_presence_on_temp_poll(balansun_temp_logic_primary_slot(g_temperature_slot_states) >= 0);
     return;
   }
   g_temperature_discovered_count = discovered;
-  balansun_temp_logic_map_bus_to_slots(bus, discovered, temperatureSlots, g_temperature_slot_states);
+  mapReadingsToSlots(readings, discovered);
   temperature = balansun_temp_logic_primary_c(g_temperature_slot_states);
-  const bool ok = balansun_temp_logic_primary_slot(g_temperature_slot_states) >= 0;
-  balansun_hw_presence_on_temp_poll(ok);
+  balansun_hw_presence_on_temp_poll(balansun_temp_logic_primary_slot(g_temperature_slot_states) >= 0);
 }
+
+float getPrimaryTemperature() { return balansun_temp_logic_primary_c(g_temperature_slot_states); }
+
+float getTemperature(int slot) {
+  if (slot < 0 || slot >= kBalansunTempMaxSensors) return kBalansunTempInvalidC;
+  const BalansunTempSlotState &st = g_temperature_slot_states[slot];
+  if (!st.config.enabled || !st.reading.valid) return kBalansunTempInvalidC;
+  return st.reading.c;
+}
+
+bool isTemperatureValid(int slot) {
+  if (slot < 0 || slot >= kBalansunTempMaxSensors) return false;
+  const BalansunTempSlotState &st = g_temperature_slot_states[slot];
+  return st.config.enabled && st.reading.valid;
+}
+
+const char *activeTemperatureSensorKind() { return "ds18b20"; }
 
 int balansun_temperature_active_valid_count() {
   int n = 0;
@@ -229,6 +147,7 @@ int balansun_temperature_active_valid_count() {
 void balansun_temperature_append_telemetry_json(JsonObject root) {
   JsonObject ts = root["temperature_sensors"].to<JsonObject>();
   ts["gpio"] = balansun_temperature_effective_gpio();
+  ts["kind"] = activeTemperatureSensorKind();
   ts["max_count"] = kBalansunTempMaxSensors;
   ts["discovered_count"] = g_temperature_discovered_count;
   ts["bus_active"] = g_temperature_bus_active && balansun_temperature_bus_should_run();

@@ -31,3 +31,9 @@ int balansun_temperature_active_valid_count();
 struct EepromExtensionFields;
 void balansun_temperature_load_extension_fields(const EepromExtensionFields &fields);
 void balansun_temperature_store_extension_fields(EepromExtensionFields &fields);
+
+/** Public temperature read API (slot orchestration + active driver). */
+float getPrimaryTemperature();
+float getTemperature(int slot);
+bool isTemperatureValid(int slot);
+const char *activeTemperatureSensorKind();
