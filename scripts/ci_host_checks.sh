@@ -47,6 +47,9 @@ echo "== OpenAPI sync + drift =="
 echo "== Meter pack generator drift =="
 "$PY" scripts/generate_meter_pack.py --check
 
+echo "== Meter manifest parity (SourceId / web registry) =="
+"$PY" scripts/check_meter_manifest_parity.py
+
 echo "== Profile test matrix drift =="
 "$PY" scripts/generate_profile_test_matrix.py --check
 "$PY" scripts/check_profile_wire_drift.py
