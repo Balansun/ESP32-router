@@ -16,42 +16,7 @@ struct SourceWireRow {
 static const char kWireOutOfRange[] = "";
 
 static const SourceWireRow kWireTable[] = {
-#if BALANSUN_ENABLE_SOURCE_JSY_MK194
-    {SourceId::JsyMk194, "JsyMk194"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_JSY_MK333
-    {SourceId::JsyMk333, "JsyMk333"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_ANALOG
-    {SourceId::Analog, "Analog"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_LINKY
-    {SourceId::Linky, "Linky"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_ENPHASE
-    {SourceId::Enphase, "Enphase"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_SHELLY_EM
-    {SourceId::ShellyEm, "ShellyEm"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_SHELLY_PRO
-    {SourceId::ShellyPro, "ShellyPro"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_SMARTG
-    {SourceId::SmartG, "SmartG"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_HOMEW
-    {SourceId::HomeW, "HomeW"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_PMqtt
-    {SourceId::Pmqtt, "Pmqtt"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_NOTDEF
-    {SourceId::NotDef, "NotDef"},
-#endif
-#if BALANSUN_ENABLE_SOURCE_EXT
-    {SourceId::BalansunPeer, "BalansunPeer"},
-#endif
+#include "balansun_meter_wire_rows.generated.inc"
 };
 
 size_t balansun_source_logic_registry_count() { return sizeof(kWireTable) / sizeof(kWireTable[0]); }

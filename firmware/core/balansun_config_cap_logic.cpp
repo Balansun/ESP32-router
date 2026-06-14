@@ -6,21 +6,7 @@
 #include <cstring>
 
 const BalansunConfigKeyCapRule kConfigKeyCapRules[] = {
-    {"ext_peer_ip", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "BalansunPeer"}},
-    {"ext_peer_port", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "BalansunPeer"}},
-    {"ext_peer_path", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "BalansunPeer"}},
-    {"ext_protocol", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "BalansunPeer"}},
-    {"enphase_user", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Enphase"}},
-    {"enphase_password", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Enphase"}},
-    {"meter_channel", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Enphase"}},
-    {"enphase_serial", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Enphase"}},
-    {"pmqtt_topic", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Pmqtt"}},
-    {"pmqtt_schema", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Pmqtt"}},
-    {"pmqtt_bindings", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Pmqtt"}},
-    {"jsy_mk333_serial_baud", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "JsyMk333"}},
-    {"calib_u", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Analog"}},
-    {"calib_i", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Analog"}},
-    {"tempo_rte_enabled", BalansunConfigCapRuleKind::MeterWire, {.meter_wire = "Linky"}},
+#include "balansun_config_cap_meter_rules.generated.inc"
     {"expert_regulation_mode", BalansunConfigCapRuleKind::ProductCap, {.cap = BalansunCap::SurplusRegulation}},
     {"regulation_gain", BalansunConfigCapRuleKind::ProductCap, {.cap = BalansunCap::SurplusRegulation}},
     {"hunting_reversal_threshold", BalansunConfigCapRuleKind::ProductCap, {.cap = BalansunCap::SurplusRegulation}},
