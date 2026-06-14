@@ -5,83 +5,48 @@
 #include "balansun_meter_sources_enable.h"
 
 #if BALANSUN_ENABLE_SOURCE_SHELLY_PRO
-#include "balansun_globals.h"
-#include "json_field_parse.h"
+#include "shelly_pro_em_meter.h"
+
 #include "api_util.h"
+#include "balansun_globals.h"
 #include "balansun_lan_http_client.h"
-// Shelly Pro EM — RPC client (shellypro3em three-phase when meter_channel = 3).
+#include "json_field_parse.h"
+#include "shelly_pro_logic.h"
 
-static String ShellyPro_Name = "";
-static String ShellyPro_Profile = "";
+#include <esp_task_wdt.h>
 
-void shelly_pro_em_poll(void) {
-  const String host = ip32ToDotted(ext_peer_ip);
-  int voie = meter_channel.toInt();
+void ShellyProMeter::buildRequest(String &host_out, String &path_out) {
+  host_out = ip32ToDotted(ext_peer_ip);
+  if (!device_info_loaded_) {
+    path_out = "/rpc/Shelly.GetDeviceInfo";
+    return;
+  }
+  path_out = "/rpc/Shelly.GetStatus";
+}
 
-  if (ShellyPro_Name.length() == 0) {
-    String Shelly_Data;
-    if (!balansun_lan_http_get(host, 80, "/rpc/Shelly.GetDeviceInfo", Shelly_Data)) {
-      delay(200);
-      meterPeerFailures++;
-      return;
-    }
-    ShellyPro_Name = parse_json_string("id", Shelly_Data);
-    int p = ShellyPro_Name.indexOf("-");
+void ShellyProMeter::poll() {
+  String host;
+  String path;
+  buildRequest(host, path);
+  String body;
+  if (!balansun_lan_http_get(host, httpPort(), path, body)) {
+    markHttpFailure();
+    return;
+  }
+  if (!device_info_loaded_) {
+    device_name_ = parse_json_string("id", body);
+    const int p = device_name_.indexOf("-");
     if (p > 0) {
-      ShellyPro_Name = ShellyPro_Name.substring(0, p);
+      device_name_ = device_name_.substring(0, p);
     }
-    ShellyPro_Profile = parse_json_string("profile", Shelly_Data);
+    device_profile_ = parse_json_string("profile", body);
+    device_info_loaded_ = true;
+    return;
   }
-
   shellyEmPollCounter = (shellyEmPollCounter + 1) % 5;
-  String Shelly_Data;
-  if (!balansun_lan_http_get(host, 80, "/rpc/Shelly.GetStatus", Shelly_Data)) {
-    delay(200);
-    meterPeerFailures++;
+  if (!parseAndApply(body)) {
     return;
   }
-  int p = Shelly_Data.indexOf("{");
-  if (p < 0) return;
-  Shelly_Data = Shelly_Data.substring(p);
-  if (Shelly_Data.length() > 0 && Shelly_Data.charAt(Shelly_Data.length() - 1) != '}') {
-    Shelly_Data += "}";
-  }
-
-  if (ShellyPro_Name.indexOf("shellypro3em") == 0 && voie == 3) {
-    String tmp = prefilter_json("em:0", ":", Shelly_Data);
-    float Pw = parse_json_float("total_act_power", tmp);
-    float T1 = parse_json_float("a_voltage", tmp);
-    float T2 = parse_json_float("b_voltage", tmp);
-    float T3 = parse_json_float("c_voltage", tmp);
-    float pf1 = fabsf(parse_json_float("a_pf", tmp));
-    float pf2 = fabsf(parse_json_float("b_pf", tmp));
-    float pf3 = fabsf(parse_json_float("c_pf", tmp));
-    float voltage = (T1 + T2 + T3) / 3.0f;
-    float pf = abs((pf1 + pf2 + pf3) / 3.0f);
-    if (pf > 1.0f) pf = 1.0f;
-    if (Pw >= 0) {
-      house_active_import_w = (int)Pw;
-      house_active_export_w = 0;
-      house_apparent_import_va = (pf > 0.01f) ? (int)(Pw / pf) : 0;
-      house_apparent_export_va = 0;
-    } else {
-      house_active_import_w = 0;
-      house_active_export_w = (int)(-Pw);
-      house_apparent_export_va = (pf > 0.01f) ? (int)((-Pw) / pf) : 0;
-      house_apparent_import_va = 0;
-    }
-    tmp = prefilter_json("emdata:0", ":", Shelly_Data);
-    house_energy_import_wh = (long)parse_json_float("total_act", tmp);
-    house_energy_export_wh = (long)parse_json_float("total_act_ret", tmp);
-    house_power_factor = pf;
-    house_voltage_v = voltage;
-    ShPro_rawData = "<strong>" + ShellyPro_Name + "</strong><br>" + Shelly_Data;
-  } else {
-    ShPro_rawData = "<strong>" + ShellyPro_Name + "</strong> profil=" + ShellyPro_Profile + " voie=" + String(voie) +
-                      "<br><em>Note: utiliser voie 3 (tri) pour shellypro3em, ou source ShellyEm pour Gen1.</em><br>" + Shelly_Data;
-    return;
-  }
-
   esp_task_wdt_reset();
   if (shellyEmPollCounter > 1) {
     meter_reading_valid = true;
@@ -89,6 +54,39 @@ void shelly_pro_em_poll(void) {
   if (cptLEDyellow > 30) {
     cptLEDyellow = 4;
   }
+}
+
+bool ShellyProMeter::parseAndApply(const String &body) {
+  String shelly_data = body;
+  const int voie = meter_channel.toInt();
+  int p = shelly_data.indexOf("{");
+  if (p < 0) {
+    return false;
+  }
+  shelly_data = shelly_data.substring(p);
+  if (shelly_data.length() > 0 && shelly_data.charAt(shelly_data.length() - 1) != '}') {
+    shelly_data += "}";
+  }
+  String raw_out;
+  if (shelly_pro_logic_apply_three_phase_status(shelly_data, device_name_, voie, raw_out)) {
+    ShPro_rawData = raw_out;
+    return true;
+  }
+  ShPro_rawData = "<strong>" + device_name_ + "</strong> profil=" + device_profile_ + " voie=" + String(voie) +
+                  "<br><em>Note: utiliser voie 3 (tri) pour shellypro3em, ou source ShellyEm pour Gen1.</em><br>" +
+                  shelly_data;
+  return false;
+}
+
+void ShellyProMeter::appendDiagnostics(JsonObject doc, int linky_tail_max) {
+  (void)linky_tail_max;
+  JsonObject sp = doc["shelly_pro"].to<JsonObject>();
+  sp["raw"] = ShPro_rawData;
+}
+
+IMeterDriver *balansun_meter_instance_shelly_pro() {
+  static ShellyProMeter instance;
+  return &instance;
 }
 
 #endif /* BALANSUN_ENABLE_SOURCE_SHELLY_PRO */

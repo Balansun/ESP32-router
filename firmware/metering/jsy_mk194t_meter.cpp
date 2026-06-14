@@ -5,13 +5,34 @@
 #include "balansun_meter_sources_enable.h"
 
 #if BALANSUN_ENABLE_SOURCE_JSY_MK194
+#include "jsy_mk194t_meter.h"
+
 #include "balansun_globals.h"
 #include "balansun_hw_presence.h"
 #include "jsy_mk194_logic.h"
 
 #include <esp_task_wdt.h>
 
-void jsy_mk194t_setup() {
+static void appendUxiWaveformDiagnostics(JsonObject doc) {
+  JsonObject wf = doc["uxi_waveform"].to<JsonObject>();
+  JsonArray vArr = wf["volt_m"].to<JsonArray>();
+  JsonArray aArr = wf["amp_m"].to<JsonArray>();
+  int i0 = 0;
+  for (int i = 0; i < 100; i++) {
+    const int i1 = (i + 1) % 100;
+    if (voltM[i] <= 0 && voltM[i1] > 0) {
+      i0 = i1;
+      break;
+    }
+  }
+  for (int i = 0; i < 100; i++) {
+    const int j = (i + i0) % 100;
+    vArr.add(voltM[j]);
+    aArr.add(ampM[j]);
+  }
+}
+
+void JsyMk194Meter::setup() {
   /* UART on first poll (core 0): Serial2.begin from setup() can trip INT WDT on ESP32-S3. */
 }
 
@@ -21,7 +42,6 @@ static bool jsy_mk194t_uart_ready(void) {
     return true;
   }
 #if CONFIG_IDF_TARGET_ESP32S3
-  /* Serial2.begin() from either setup or metering still trips INT WDT on DevKit+OPI; poll paused. */
   (void)ready;
   return false;
 #else
@@ -34,24 +54,21 @@ static bool jsy_mk194t_uart_ready(void) {
 #endif
 }
 
-void jsy_mk194t_poll() {
+bool JsyMk194Meter::pollTransport() {
   if (millis() < 5000UL) {
     balansun_hw_presence_on_jsy_poll(false, false);
-    return;
+    return false;
   }
   const bool uart_ok = jsy_mk194t_uart_ready();
   if (!uart_ok) {
     balansun_hw_presence_on_jsy_poll(false, false);
-    return;
+    return false;
   }
-  int i;
-  byte msg_send[] = { 0x01, 0x03, 0x00, 0x48, 0x00, 0x0E, 0x44, 0x18 };
-  // Modbus RTU request on Serial2
-  for (i = 0; i < 8; i++) {
+  const byte msg_send[] = {0x01, 0x03, 0x00, 0x48, 0x00, 0x0E, 0x44, 0x18};
+  for (int i = 0; i < 8; i++) {
     Serial2.write(msg_send[i]);
   }
 
-  // Response to previous poll (4800 baud only)
   int a = 0;
   constexpr int kJsyMaxRxBytes = 64;
   while (Serial2.available() && a < kJsyMaxRxBytes) {
@@ -61,7 +78,6 @@ void jsy_mk194t_poll() {
   while (Serial2.available()) {
     Serial2.read();
   }
-
 
   bool frame_ok = false;
   if (a == 61) {
@@ -97,5 +113,21 @@ void jsy_mk194t_poll() {
     }
   }
   balansun_hw_presence_on_jsy_poll(true, frame_ok);
+  return frame_ok;
 }
+
+void JsyMk194Meter::appendDiagnostics(JsonObject doc, int linky_tail_max) {
+  (void)linky_tail_max;
+  appendUxiWaveformDiagnostics(doc);
+}
+
+IMeterDriver *balansun_meter_instance_jsy_mk194() {
+  static JsyMk194Meter instance;
+  return &instance;
+}
+
+void jsy_mk194t_setup(void) { balansun_meter_instance_jsy_mk194()->setup(); }
+
+void jsy_mk194t_poll(void) { balansun_meter_instance_jsy_mk194()->poll(); }
+
 #endif /* BALANSUN_ENABLE_SOURCE_JSY_MK194 */

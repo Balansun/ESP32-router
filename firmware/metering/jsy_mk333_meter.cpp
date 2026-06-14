@@ -5,10 +5,14 @@
 #include "balansun_meter_sources_enable.h"
 
 #if BALANSUN_ENABLE_SOURCE_JSY_MK333
-#include "balansun_globals.h"
-// JSY-MK-333 (three-phase) Modbus subset.
+#include "jsy_mk333_meter.h"
 
-void jsy_mk333_setup(void) {
+#include "balansun_globals.h"
+#include "jsy_mk333_logic.h"
+
+#include <esp_task_wdt.h>
+
+void JsyMk333Meter::setup() {
   Serial2.setRxBufferSize(1024);
   uint32_t b = JsyMk333SerialBaud;
   if (b < 1200 || b > 115200) {
@@ -24,7 +28,7 @@ void jsy_mk333_send_request(void) {
   }
 }
 
-void jsy_mk333_poll(void) {
+bool JsyMk333Meter::pollTransport() {
   jsy_mk333_send_request();
   delay(8);
   byte buf[200];
@@ -34,62 +38,75 @@ void jsy_mk333_poll(void) {
   }
   if (a != 141) {
     MK333_rawData = "<strong>JSY-MK-333</strong><br>Trame " + String(a) + " octets (attendu 141)";
-    return;
+    return false;
   }
 
-  float T1 = ((buf[3] * 256) + buf[4]) / 100.0f;
-  float T2 = ((buf[5] * 256) + buf[6]) / 100.0f;
-  float T3 = ((buf[7] * 256) + buf[8]) / 100.0f;
-  float I1 = ((buf[9] * 256) + buf[10]) / 100.0f;
-  float I2 = ((buf[11] * 256) + buf[12]) / 100.0f;
-  float I3 = ((buf[13] * 256) + buf[14]) / 100.0f;
-  bool s1 = (buf[104] & 0x01) != 0;
-  bool s2 = ((buf[104] >> 1) & 0x01) != 0;
-  bool s3 = ((buf[104] >> 2) & 0x01) != 0;
-  if (s1) I1 *= -1;
-  if (s2) I2 *= -1;
-  if (s3) I3 *= -1;
-  bool injection = ((buf[104] >> 3) & 0x01) != 0;
-
-  float Ptot = (float)(((uint32_t)buf[21] << 24) | ((uint32_t)buf[22] << 16) | ((uint32_t)buf[23] << 8) | (uint32_t)buf[24]);
-  float pva1 = (float)((buf[35] * 256) + buf[36]);
-  float pva2 = (float)((buf[37] * 256) + buf[38]);
-  float pva3 = (float)((buf[39] * 256) + buf[40]);
-  if (s1) pva1 = -pva1;
-  if (s2) pva2 = -pva2;
-  if (s3) pva3 = -pva3;
-  float pvaSum = pva1 + pva2 + pva3;
-
-  int32_t ws = ((int32_t)buf[119] << 24) | ((uint32_t)buf[120] << 16) | ((uint32_t)buf[121] << 8) | (uint32_t)buf[122];
-  int32_t wi = ((int32_t)buf[135] << 24) | ((uint32_t)buf[136] << 16) | ((uint32_t)buf[137] << 8) | (uint32_t)buf[138];
-  float JSY_Sout = (float)ws * 10.0f;
-  float JSY_Inj = (float)wi * 10.0f;
-  house_energy_import_wh = (long)(JSY_Sout / 10.0f);
-  house_energy_export_wh = (long)(JSY_Inj / 10.0f);
-
-  if (injection) {
-    house_active_import_w = 0;
-    house_active_export_w = (int)Ptot;
-    house_apparent_import_va = 0;
-    house_apparent_export_va = (int)fabsf(pvaSum);
-  } else {
-    house_active_import_w = (int)Ptot;
-    house_active_export_w = 0;
-    house_apparent_import_va = (int)fabsf(pvaSum);
-    house_apparent_export_va = 0;
+  JsyMk333Reading rd;
+  if (!jsy_mk333_parse_modbus_frame(buf, a, rd)) {
+    return false;
   }
-  house_voltage_v = (T1 + T2 + T3) / 3.0f;
-  house_current_a = (fabsf(I1) + fabsf(I2) + fabsf(I3)) / 3.0f;
-  house_power_factor = (house_apparent_import_va > 0) ? (float)house_active_import_w / (float)house_apparent_import_va : 1.0f;
 
-  MK333_rawData = "<strong>JSY-MK-333</strong><br>U1=" + String(T1) + "V I1=" + String(I1) + "A<br>";
-  MK333_rawData += "Pw=" + String((int)Ptot) + "W inj=" + String(injection ? "oui" : "non");
+  const float t1 = static_cast<float>((buf[3] << 8) + buf[4]) / 100.0f;
+  const float t2 = static_cast<float>((buf[5] << 8) + buf[6]) / 100.0f;
+  const float t3 = static_cast<float>((buf[7] << 8) + buf[8]) / 100.0f;
+  float i1 = static_cast<float>((buf[9] << 8) + buf[10]) / 100.0f;
+  float i2 = static_cast<float>((buf[11] << 8) + buf[12]) / 100.0f;
+  float i3 = static_cast<float>((buf[13] << 8) + buf[14]) / 100.0f;
+  const bool s1 = (buf[104] & 0x01) != 0;
+  const bool s2 = ((buf[104] >> 1) & 0x01) != 0;
+  const bool s3 = ((buf[104] >> 2) & 0x01) != 0;
+  if (s1) {
+    i1 *= -1;
+  }
+  if (s2) {
+    i2 *= -1;
+  }
+  if (s3) {
+    i3 *= -1;
+  }
+
+  const int32_t ws = ((int32_t)buf[119] << 24) | ((uint32_t)buf[120] << 16) | ((uint32_t)buf[121] << 8) |
+                      (uint32_t)buf[122];
+  const int32_t wi = ((int32_t)buf[135] << 24) | ((uint32_t)buf[136] << 16) | ((uint32_t)buf[137] << 8) |
+                       (uint32_t)buf[138];
+  const float jsy_sout = static_cast<float>(ws) * 10.0f;
+  const float jsy_inj = static_cast<float>(wi) * 10.0f;
+  house_energy_import_wh = static_cast<long>(jsy_sout / 10.0f);
+  house_energy_export_wh = static_cast<long>(jsy_inj / 10.0f);
+
+  house_active_import_w = rd.house_active_import_w;
+  house_active_export_w = rd.house_active_export_w;
+  house_apparent_import_va = rd.house_apparent_import_va;
+  house_apparent_export_va = rd.house_apparent_export_va;
+  house_voltage_v = rd.tension_avg_v;
+  house_current_a = rd.intensite_avg_a;
+  house_power_factor = (house_apparent_import_va > 0)
+                           ? static_cast<float>(house_active_import_w) / static_cast<float>(house_apparent_import_va)
+                           : 1.0f;
+
+  MK333_rawData = "<strong>JSY-MK-333</strong><br>U1=" + String(t1) + "V I1=" + String(i1) + "A<br>";
+  const float ptot = static_cast<float>(((uint32_t)buf[21] << 24) | ((uint32_t)buf[22] << 16) |
+                                        ((uint32_t)buf[23] << 8) | (uint32_t)buf[24]);
+  MK333_rawData += "Pw=" + String((int)ptot) + "W inj=" + String(rd.injection ? "oui" : "non");
 
   meter_reading_valid = true;
   esp_task_wdt_reset();
   if (cptLEDyellow > 30) {
     cptLEDyellow = 4;
   }
+  return true;
+}
+
+void JsyMk333Meter::appendDiagnostics(JsonObject doc, int linky_tail_max) {
+  (void)linky_tail_max;
+  JsonObject j3 = doc["jsy333"].to<JsonObject>();
+  j3["raw"] = MK333_rawData;
+  j3["serial_baud"] = JsyMk333SerialBaud;
+}
+
+IMeterDriver *balansun_meter_instance_jsy_mk333() {
+  static JsyMk333Meter instance;
+  return &instance;
 }
 
 #endif /* BALANSUN_ENABLE_SOURCE_JSY_MK333 */

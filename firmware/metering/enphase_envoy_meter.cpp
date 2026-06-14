@@ -5,31 +5,34 @@
 #include "balansun_meter_sources_enable.h"
 
 #if BALANSUN_ENABLE_SOURCE_ENPHASE
-#include "balansun_globals.h"
+#include "enphase_envoy_meter.h"
+
 #include "api_util.h"
+#include "balansun_globals.h"
 #include "json_field_parse.h"
 #include "UrlEncode.h"
-#include <WiFiClientSecure.h>
-WiFiClientSecure clientSecu;
-void enphase_envoy_setup() {
 
-  //Obtention Session ID
-  //********************
-  const char* server1Enphase = "enlighten.enphaseenergy.com";
-  String Host = String(server1Enphase);
-  String adrEnphase = "https://" + Host + "/login/login.json";
-  String requestBody = "user[email]=" + EnphaseUser + "&user[password]=" + urlEncode( EnphasePwd);
+#include <WiFiClientSecure.h>
+#include <esp_task_wdt.h>
+
+static WiFiClientSecure clientSecu;
+
+void EnphaseMeter::setup() {
+  const char *server1Enphase = "enlighten.enphaseenergy.com";
+  String host = String(server1Enphase);
+  String adrEnphase = "https://" + host + "/login/login.json";
+  String requestBody = "user[email]=" + EnphaseUser + "&user[password]=" + urlEncode(EnphasePwd);
 
   if (EnphaseUser != "" && EnphasePwd != "") {
     Serial.println("Trying Enlighten server 1 for session_id...");
     Debug.println("Trying Enlighten server 1 for session_id...");
-    clientSecu.setInsecure();  //skip verification
-    if (!clientSecu.connect(server1Enphase, 443))
-      Serial.println("Connection failed to Enlighten server :" + Host);
-    else {
-      Serial.println("Connected to Enlighten server:" + Host);
+    clientSecu.setInsecure();
+    if (!clientSecu.connect(server1Enphase, 443)) {
+      Serial.println("Connection failed to Enlighten server :" + host);
+    } else {
+      Serial.println("Connected to Enlighten server:" + host);
       clientSecu.println("POST " + adrEnphase + "?" + requestBody + " HTTP/1.0");
-      clientSecu.println("Host: " + Host);
+      clientSecu.println("Host: " + host);
       clientSecu.println("Connection: close");
       clientSecu.println();
       String line = "";
@@ -39,11 +42,8 @@ void enphase_envoy_setup() {
           Serial.println("headers 1 Enlighten received");
           JsonToken = "";
         }
-
         JsonToken += line;
       }
-      // if there are incoming bytes available
-      // from the server, read them and print them:
       while (clientSecu.available()) {
         char c = clientSecu.read();
         Serial.write(c);
@@ -57,22 +57,22 @@ void enphase_envoy_setup() {
     Serial.println("Connecting to Envoy-S gateway (firmware v5)");
     Debug.println("Connecting to Envoy-S gateway (firmware v5)");
   }
-  //Obtention Token
-  //********************
+
   if (Session_id != "" && meter_channel != "" && EnphaseUser != "") {
-    const char* server2Enphase = "entrez.enphaseenergy.com";
-    Host = String(server2Enphase);
-    adrEnphase = "https://" + Host + "/tokens";
-    requestBody = "{\"session_id\":\"" + Session_id + "\", \"serial_num\":" + meter_channel + ", \"username\":\"" + EnphaseUser + "\"}";
+    const char *server2Enphase = "entrez.enphaseenergy.com";
+    host = String(server2Enphase);
+    adrEnphase = "https://" + host + "/tokens";
+    requestBody = "{\"session_id\":\"" + Session_id + "\", \"serial_num\":" + meter_channel +
+                  ", \"username\":\"" + EnphaseUser + "\"}";
     Serial.println("Trying Enlighten server 2 for token...");
     Debug.println("Trying Enlighten server 2 for token...");
-    clientSecu.setInsecure();  //skip verification
-    if (!clientSecu.connect(server2Enphase, 443))
-      Serial.println("Connection failed to :" + Host);
-    else {
-      Serial.println("Connected to :" + Host);
+    clientSecu.setInsecure();
+    if (!clientSecu.connect(server2Enphase, 443)) {
+      Serial.println("Connection failed to :" + host);
+    } else {
+      Serial.println("Connected to :" + host);
       clientSecu.println("POST " + adrEnphase + " HTTP/1.0");
-      clientSecu.println("Host: " + Host);
+      clientSecu.println("Host: " + host);
       clientSecu.println("Content-Type: application/json");
       clientSecu.println("content-length:" + String(requestBody.length()));
       clientSecu.println("Connection: close");
@@ -88,11 +88,8 @@ void enphase_envoy_setup() {
           Serial.println("headers 2 enlighten received");
           JsonToken = "";
         }
-
         JsonToken += line;
       }
-      // if there are incoming bytes available
-      // from the server, read them and print them:
       while (clientSecu.available()) {
         char c = clientSecu.read();
         Serial.write(c);
@@ -114,21 +111,20 @@ void enphase_envoy_setup() {
   }
 }
 
-void enphase_envoy_poll() {  // Read house consumption from Envoy
-  int Num_portIQ = 443;
-  String JsonEnPhase = "";
-  String host = ip32ToDotted(ext_peer_ip);
+void EnphaseMeter::poll() {
+  const int num_port_iq = 443;
+  String json_enphase = "";
+  const String host = ip32ToDotted(ext_peer_ip);
 
-  if (TokenEnphase.length() > 50 && EnphaseUser != "") {  // HTTPS path (firmware V7+)
-    if (millis() > 2592000000) {                          // Refresh token about every 30 days
-      enphase_envoy_setup();
+  if (TokenEnphase.length() > 50 && EnphaseUser != "") {
+    if (millis() > 2592000000UL) {
+      setup();
     }
 
-    clientSecu.setInsecure();  //skip verification
-    if (!clientSecu.connect(host.c_str(), Num_portIQ)) {
+    clientSecu.setInsecure();
+    if (!clientSecu.connect(host.c_str(), num_port_iq)) {
       Serial.println("Connection failed to Envoy-S server!");
     } else {
-      //Serial.println("Connected to Envoy-S server!");
       clientSecu.println("GET https://" + host + "/ivp/meters/reports/consumption HTTP/1.0");
       clientSecu.println("Host: " + host);
       clientSecu.println("Accept: application/json");
@@ -140,31 +136,26 @@ void enphase_envoy_poll() {  // Read house consumption from Envoy
       while (clientSecu.connected()) {
         line = clientSecu.readStringUntil('\n');
         if (line == "\r") {
-          //Serial.println("headers received");
-          JsonEnPhase = "";
+          json_enphase = "";
         }
-        JsonEnPhase += line;
+        json_enphase += line;
       }
-      // if there are incoming bytes available
-      // from the server, read them and print them:
       while (clientSecu.available()) {
         char c = clientSecu.read();
         Serial.write(c);
       }
-
       clientSecu.stop();
     }
-  } else {  // Envoy V5: plain HTTP on port 80
-    // Use WiFiClient class to create TCP connections http
+  } else {
     WiFiClient clientFirmV5;
     if (!clientFirmV5.connect(host.c_str(), 80)) {
       Serial.println("connection to client clientFirmV5 failed (call to Envoy-S)");
-      delay(200);
-      meterPeerFailures++;
+      markHttpFailure();
       return;
     }
-    String url = "/ivp/meters/reports/consumption";
-    clientFirmV5.print(String("GET ") + url + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" + "Connection: close\r\n\r\n");;
+    const String url = "/ivp/meters/reports/consumption";
+    clientFirmV5.print(String("GET ") + url + " HTTP/1.1\r\n" + "Host: " + host + "\r\n" +
+                       "Connection: close\r\n\r\n");
     unsigned long timeout = millis();
     while (clientFirmV5.available() == 0) {
       if (millis() - timeout > 5000) {
@@ -175,67 +166,81 @@ void enphase_envoy_poll() {  // Read house consumption from Envoy
     }
     timeout = millis();
     String line;
-    // Read raw HTTP response lines from gateway
     while (clientFirmV5.available() && (millis() - timeout < 5000)) {
       line = clientFirmV5.readStringUntil('\n');
       if (line == "\r") {
-          //Serial.println("headers received");
-          JsonEnPhase = "";
-        }
-        JsonEnPhase += line;
+        json_enphase = "";
+      }
+      json_enphase += line;
     }
   }
- 
-  // Avoid ArduinoJson on large Envoy payloads; use string field extractors instead
-  String TotConso = prefilter_json("total-consumption", "cumulative", JsonEnPhase);
-  enphase_house_active_w = int(parse_json_float("actPower", TotConso));
-  String NetConso = prefilter_json("net-consumption", "cumulative", JsonEnPhase);
-  float PactReseau = parse_json_float("actPower", NetConso);
-  if (PactReseau < 0) {
+
+  const String tot_conso = prefilter_json("total-consumption", "cumulative", json_enphase);
+  enphase_house_active_w = int(parse_json_float("actPower", tot_conso));
+  const String net_conso = prefilter_json("net-consumption", "cumulative", json_enphase);
+  const float pact_reseau = parse_json_float("actPower", net_conso);
+  if (pact_reseau < 0) {
     house_active_import_w = 0;
-    house_active_export_w = int(-PactReseau);
+    house_active_export_w = int(-pact_reseau);
   } else {
     house_active_export_w = 0;
-    house_active_import_w = int(PactReseau);
+    house_active_import_w = int(pact_reseau);
   }
-  float PvaReseau = parse_json_float("apprntPwr", NetConso);
-  if (PvaReseau < 0) {
+  const float pva_reseau = parse_json_float("apprntPwr", net_conso);
+  if (pva_reseau < 0) {
     house_apparent_import_va = 0;
-    house_apparent_export_va = int(-PvaReseau);
+    house_apparent_export_va = int(-pva_reseau);
   } else {
     house_apparent_export_va = 0;
-    house_apparent_import_va = int(PvaReseau);
+    house_apparent_import_va = int(pva_reseau);
   }
-  float PowerFactor = 0;
-  if (PvaReseau != 0) {
-    PowerFactor = floor(100 * PactReseau / PvaReseau) / 100;
-    PowerFactor = min(PowerFactor, float(1));
+  float power_factor = 0;
+  if (pva_reseau != 0) {
+    power_factor = floor(100 * pact_reseau / pva_reseau) / 100;
+    power_factor = min(power_factor, float(1));
   }
-  house_power_factor = PowerFactor;
-  long whDlvdCum = parse_json_long("whDlvdCum", NetConso);
-  long DeltaWh = 0;
-  if (whDlvdCum != 0) {  // valid cumulative reading
+  house_power_factor = power_factor;
+  const long wh_dlvd_cum = parse_json_long("whDlvdCum", net_conso);
+  long delta_wh = 0;
+  if (wh_dlvd_cum != 0) {
     if (LastwhDlvdCum == 0) {
-      LastwhDlvdCum = whDlvdCum;
+      LastwhDlvdCum = wh_dlvd_cum;
     }
-    DeltaWh = whDlvdCum - LastwhDlvdCum;
-    LastwhDlvdCum = whDlvdCum;
-    if (DeltaWh < 0) {
-      house_energy_export_wh = house_energy_export_wh - DeltaWh;
+    delta_wh = wh_dlvd_cum - LastwhDlvdCum;
+    LastwhDlvdCum = wh_dlvd_cum;
+    if (delta_wh < 0) {
+      house_energy_export_wh = house_energy_export_wh - delta_wh;
     } else {
-      house_energy_import_wh = house_energy_import_wh + DeltaWh;
+      house_energy_import_wh = house_energy_import_wh + delta_wh;
     }
   }
-  house_voltage_v = parse_json_float("rmsVoltage", NetConso);
-  house_current_a = parse_json_float("rmsCurrent", NetConso);
-  enphase_production_w = enphase_house_active_w - int(PactReseau);
+  house_voltage_v = parse_json_float("rmsVoltage", net_conso);
+  house_current_a = parse_json_float("rmsCurrent", net_conso);
+  enphase_production_w = enphase_house_active_w - int(pact_reseau);
   meter_reading_valid = true;
-  if (PactReseau != 0 || PvaReseau != 0) {
-    esp_task_wdt_reset();  // Feed WDT on each non-idle Envoy metered frame
+  if (pact_reseau != 0 || pva_reseau != 0) {
+    esp_task_wdt_reset();
   }
   if (cptLEDyellow > 30) {
     cptLEDyellow = 4;
   }
+}
+
+void EnphaseMeter::appendDiagnostics(JsonObject doc, int linky_tail_max) {
+  (void)linky_tail_max;
+  JsonObject ep = doc["enphase"].to<JsonObject>();
+  ep["user"] = EnphaseUser;
+  ep["serial"] = meter_channel;
+  ep["has_user"] = EnphaseUser.length() > 0;
+  ep["has_session"] = Session_id.length() > 0;
+  ep["has_token"] = TokenEnphase.length() > 50;
+  ep["pact_prod_w"] = enphase_production_w;
+  ep["pact_conso_w"] = enphase_house_active_w;
+}
+
+IMeterDriver *balansun_meter_instance_enphase() {
+  static EnphaseMeter instance;
+  return &instance;
 }
 
 #endif /* BALANSUN_ENABLE_SOURCE_ENPHASE */
