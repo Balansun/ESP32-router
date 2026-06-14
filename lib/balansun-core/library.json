@@ -20,6 +20,8 @@
     "balansun/action_node_control.h",
     "balansun/action_node_manual.h",
     "balansun/action_node_time.h",
-    "balansun/ds18_poll.h"
+    "balansun/ds18_poll.h",
+    "balansun/temperature_reading.h",
+    "balansun/temperature_sensor_iface.h"
   ]
 }
