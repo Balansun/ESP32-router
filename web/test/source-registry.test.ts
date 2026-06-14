@@ -62,8 +62,8 @@ describe("source registry", () => {
   it("maps expected fields per source", () => {
     const expected: Partial<Record<SourceWireId, string[]>> = {
       Analog: ["calib_u", "calib_i"],
-      Pmqtt: ["pmqtt_topic", "pmqtt_schema"],
-      Enphase: ["enphase_user", "enphase_password", "enphase_serial"],
+      Pmqtt: ["pmqtt_topic", "pmqtt_schema", "pmqtt_bindings"],
+      Enphase: ["enphase_user", "enphase_password", "enphase_serial", "meter_channel"],
       ShellyPro: ["ext_peer_ip", "meter_channel"],
       JsyMk333: ["jsy_mk333_serial_baud"],
     };

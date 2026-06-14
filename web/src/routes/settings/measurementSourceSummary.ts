@@ -2,7 +2,7 @@ import type { RouterConfig, SourceDiagnostics } from "../../api/types";
 import type { AppStrings } from "../../i18n/locales/en";
 import { formatStr } from "../../i18n/format";
 import { fmtVolts } from "../../utils/format";
-import { registryEntry, type SourceWireId } from "./sourceRegistry";
+import { isLanHttpSource, registryEntry, type SourceWireId } from "./sourceRegistry";
 
 export interface SourceSummaryRow {
   label: string;
@@ -207,14 +207,8 @@ export function buildSourceSummaryRows(
     }
   }
 
-  const lanSources = new Set([
-    "enphase",
-    "smartg",
-    "shellyem",
-    "homew",
-    "shellypro",
-  ]);
-  if (lanSources.has(sourceKey)) {
+  const lanWire = wire ?? wireFromCfg;
+  if (lanWire && lanWire !== "BalansunPeer" && isLanHttpSource(lanWire)) {
     const ip =
       formatPeerIp(cfg.ext_peer_ip) !== "—"
         ? formatPeerIp(cfg.ext_peer_ip)
@@ -267,8 +261,9 @@ export function buildSourceSummaryRows(
     }
   }
 
-  const physicalMeter = new Set(["jsymk194", "analog", "linky", "jsymk333"]);
-  if (physicalMeter.has(sourceKey) && d) {
+  const physicalEntry = lanWire ?? wireFromCfg;
+  const reg = physicalEntry ? registryEntry(physicalEntry) : undefined;
+  if (reg && (reg.baseKind === "serial" || reg.baseKind === "adc") && d) {
     if (Number.isFinite(d.voltage_house_v) && d.voltage_house_v > 0) {
       rows.push({
         label: SS.voltage,
