@@ -144,6 +144,12 @@ int balansun_temperature_active_valid_count() {
   return n;
 }
 
+void balansun_temperature_set_primary_c_json(JsonObject doc, const char *key) {
+  if (balansun_temp_logic_is_valid_c(temperature)) {
+    doc[key] = temperature;
+  }
+}
+
 void balansun_temperature_append_telemetry_json(JsonObject root) {
   JsonObject ts = root["temperature_sensors"].to<JsonObject>();
   ts["gpio"] = balansun_temperature_effective_gpio();

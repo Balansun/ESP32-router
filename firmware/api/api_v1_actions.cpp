@@ -10,7 +10,7 @@ void handle_get_actions_live() {
   API_AUTH_GUARD();
   BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(2048);
   JsonDocument &doc = _balansunJsonPool1;
-  doc["temperature_c"] = temperature;
+  balansun_temperature_set_primary_c_json(doc.as<JsonObject>());
   balansun_temperature_append_telemetry_json(doc.as<JsonObject>());
   doc["source"] = Source_data;
   doc["ext_peer_ip"] = ip32ToDotted(ext_peer_ip);

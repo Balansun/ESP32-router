@@ -6,6 +6,7 @@
 #include "balansun_pin_map.h"
 #include "balansun_product_caps.h"
 #include "balansun_pwr_hist_limits.h"
+#include "balansun_temperature.h"
 #include <cstring>
 #include <vector>
 
@@ -208,7 +209,7 @@ void handle_get_history_power() {
     doc["window"] = w;
     doc["max_points"] = maxPts;
     doc["sample_period_s"] = 2;
-    doc["temperature_now_c"] = temperature;
+    balansun_temperature_set_primary_c_json(doc.as<JsonObject>(), "temperature_now_c");
     int iS = IdxStock2s;
     JsonArray hm = doc["house_active_w"].to<JsonArray>();
     JsonArray hmva = doc["house_apparent_va"].to<JsonArray>();

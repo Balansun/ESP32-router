@@ -3061,7 +3061,8 @@
         "properties": {
           "temperature_c": {
             "type": "number",
-            "description": "Primary probe temperature for regulation (first enabled valid slot)."
+            "nullable": true,
+            "description": "Primary probe temperature for regulation (first enabled valid slot). Omitted when no enabled probe has a valid reading; internal firmware sentinel -127 is never exposed."
           },
           "temperature_sensors": {
             "$ref": "#/components/schemas/TemperatureSensorsTelemetry"
@@ -3141,7 +3142,9 @@
             "type": "integer"
           },
           "temperature_now_c": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "description": "Current primary probe temperature. Omitted when no valid reading."
           },
           "house_active_w": {
             "type": "array",
@@ -3933,7 +3936,9 @@
         "type": "object",
         "properties": {
           "temperature_c": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "description": "Primary probe temperature. Omitted when no enabled probe has a valid reading."
           },
           "temperature_sensors": {
             "$ref": "#/components/schemas/TemperatureSensorsTelemetry"
@@ -4181,7 +4186,9 @@
             "type": "boolean"
           },
           "temperature_c": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "description": "Primary probe temperature. Omitted when no enabled probe has a valid reading."
           },
           "time": {
             "type": "string"
@@ -4780,7 +4787,9 @@
             "type": "boolean"
           },
           "temperature_c": {
-            "type": "number"
+            "type": "number",
+            "nullable": true,
+            "description": "Primary probe temperature. Omitted when no enabled probe has a valid reading."
           },
           "frequency_hz": {
             "type": "number"

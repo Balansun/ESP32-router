@@ -149,7 +149,7 @@ void handle_get_state() {
   JsonObject measurements = doc["measurements"].to<JsonObject>();
   api_append_measurements_object(measurements);
   JsonObject actions = doc["actions_live"].to<JsonObject>();
-  actions["temperature_c"] = temperature;
+  balansun_temperature_set_primary_c_json(actions);
   actions["source"] = Source_data;
   actions["ext_peer_ip"] = ip32ToDotted(ext_peer_ip);
   actions["ext_peer_port"] = ext_peer_port;
@@ -171,7 +171,7 @@ void handle_get_state() {
   status["site_cap_active"] = siteCapActive;
   status["mqtt_connected"] = clientMQTT.connected();
   doc["heater_load_backoff_active"] = heaterLoadBackoffActive;
-  doc["temperature_c"] = temperature;
+  balansun_temperature_set_primary_c_json(doc.as<JsonObject>());
   doc["time"] = time_sync_valid ? sync_clock_str : "";
   doc["date_valid"] = time_sync_valid;
   doc["source"] = Source_data;
@@ -207,9 +207,7 @@ void handle_get_health() {
   JsonObject st = doc["self_test"].to<JsonObject>();
   balansun_self_test_append_health_json(st);
   balansun_hw_presence_append_json(doc.as<JsonObject>());
-  if (temperature > -100) {
-    doc["temperature_c"] = temperature;
-  }
+  balansun_temperature_set_primary_c_json(doc.as<JsonObject>());
   balansun_temperature_append_telemetry_json(doc.as<JsonObject>());
   String out;
   serializeJson(doc, out);

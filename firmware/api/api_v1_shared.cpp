@@ -661,9 +661,7 @@ void api_append_measurements_object(JsonObject doc) {
   }
   JsonObject diag = doc["diagnostics"].to<JsonObject>();
   balansun_append_measurements_diagnostics(diag);
-  if (temperature > -100) {
-    doc["temperature_c"] = temperature;
-  }
+  balansun_temperature_set_primary_c_json(doc);
   balansun_temperature_append_telemetry_json(doc);
   doc["triac_sync_state"] =
       balansun_triac_sync_state_wire(balansun_triac_sync_state_from_zc(zc_sync_state, balansun_product_caps_compile_time()));

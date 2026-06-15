@@ -52,9 +52,7 @@ void balansun_append_ha_state_payload(JsonObject doc) {
     doc["second_day_energy_export_wh"] = second_day_energy_export_wh;
     doc["mains_frequency_hz"] = mains_frequency_hz;
   }
-  if (temperature > -100) {
-    doc["temperature_c"] = temperature;
-  }
+  balansun_temperature_set_primary_c_json(doc);
   for (int s = 0; s < kBalansunTempMaxSensors; s++) {
     const BalansunTempSlotState &st = g_temperature_slot_states[s];
     if (!st.config.enabled || !st.reading.valid) continue;

@@ -4,6 +4,7 @@
 #include "api_v1_common.h"
 #include "balansun_api_caps.h"
 #include "balansun_hw_presence.h"
+#include "balansun_temperature.h"
 #include "metering/pmqtt_bindings.h"
 void handle_get_sources_diagnostics() {
   API_AUTH_GUARD();
@@ -14,7 +15,7 @@ void handle_get_sources_diagnostics() {
   doc["source_data"] = Source_data;
   doc["date"] = time_sync_valid ? sync_clock_str : "";
   doc["date_valid"] = time_sync_valid;
-  doc["temperature_c"] = temperature;
+  balansun_temperature_set_primary_c_json(doc.as<JsonObject>());
   doc["frequency_hz"] = mains_frequency_hz;
   doc["voltage_house_v"] = house_voltage_v;
   doc["current_house_a"] = house_current_a;

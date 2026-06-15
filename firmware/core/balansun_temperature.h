@@ -21,6 +21,8 @@ void balansun_temperature_poll();
 void balansun_temperature_invalidate_bus();
 /** Non-blocking 1-Wire service: finish conversions and idle poll (~5 s). Call from main loop. */
 void balansun_temperature_service(unsigned long now_ms);
+/** Set doc[key] only when global primary temperature is a valid probe reading. */
+void balansun_temperature_set_primary_c_json(JsonObject doc, const char *key = "temperature_c");
 void balansun_temperature_append_telemetry_json(JsonObject root);
 void balansun_temperature_append_config_json(JsonObject root);
 bool balansun_temperature_apply_config_json(JsonObject root, bool has_slots, bool has_gpio,
