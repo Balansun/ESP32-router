@@ -12,3 +12,15 @@ TEST(MeterHttpTrim, rejectsMissingBrace) {
   std::string inner;
   EXPECT_FALSE(balansun_meter_http_trim_json_object("not json", inner));
 }
+
+TEST(MeterHttpTrim, rejectsMissingClosingBrace) {
+  std::string inner;
+  EXPECT_FALSE(balansun_meter_http_trim_json_object(R"({"a":1)", inner));
+  EXPECT_TRUE(inner.empty());
+}
+
+TEST(MeterHttpTrim, rejectsEmptyObject) {
+  std::string inner;
+  EXPECT_FALSE(balansun_meter_http_trim_json_object("{}", inner));
+  EXPECT_TRUE(inner.empty());
+}
