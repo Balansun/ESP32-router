@@ -8,14 +8,28 @@ import sys
 from pathlib import Path
 
 
-def firmware_size_bytes(env: str, root: Path, pio: str) -> int:
+def firmware_bin_path(root: Path, env: str) -> Path:
+    return root / ".pio" / "build" / env / "firmware.bin"
+
+
+def firmware_size_bytes(
+    env: str, root: Path, pio: str, *, require_built: bool
+) -> int:
+    bin_path = firmware_bin_path(root, env)
+    if require_built:
+        if not bin_path.is_file():
+            raise FileNotFoundError(
+                f"{bin_path} missing — run: pio run -e {env} before "
+                "check_firmware_size.py --require-built"
+            )
+        return bin_path.stat().st_size
+
     subprocess.run(
         [pio, "run", "-e", env],
         cwd=root,
         check=True,
         capture_output=True,
     )
-    bin_path = root / ".pio" / "build" / env / "firmware.bin"
     if not bin_path.is_file():
         raise FileNotFoundError(bin_path)
     return bin_path.stat().st_size
@@ -55,6 +69,11 @@ def main() -> int:
         action="store_true",
         help="Size-check all router envs from profile_test_matrix.json",
     )
+    parser.add_argument(
+        "--require-built",
+        action="store_true",
+        help="Read existing firmware.bin; fail if not built (no pio run)",
+    )
     parser.add_argument("--min-delta-bytes", type=int, default=20480)
     args = parser.parse_args()
 
@@ -62,12 +81,16 @@ def main() -> int:
         profiles = load_router_envs(args.root)
     else:
         profiles = args.profile or ["jsy_mk194_router", "jsy_mk194_meter"]
-    base = firmware_size_bytes(args.baseline, args.root, args.pio)
+    base = firmware_size_bytes(
+        args.baseline, args.root, args.pio, require_built=args.require_built
+    )
     print(f"{args.baseline}: {base} bytes")
 
     rc = 0
     for prof in profiles:
-        size = firmware_size_bytes(prof, args.root, args.pio)
+        size = firmware_size_bytes(
+            prof, args.root, args.pio, require_built=args.require_built
+        )
         delta = base - size
         print(f"{prof}: {size} bytes (delta vs baseline: {delta} bytes)")
         if prof == "hil":
@@ -80,8 +103,12 @@ def main() -> int:
             )
             rc = 1
 
-    router = firmware_size_bytes("jsy_mk194_router", args.root, args.pio)
-    meter = firmware_size_bytes("jsy_mk194_meter", args.root, args.pio)
+    router = firmware_size_bytes(
+        "jsy_mk194_router", args.root, args.pio, require_built=args.require_built
+    )
+    meter = firmware_size_bytes(
+        "jsy_mk194_meter", args.root, args.pio, require_built=args.require_built
+    )
     if meter >= router:
         print(
             f"WARN: jsy_mk194_meter ({meter}) should be smaller than jsy_mk194_router ({router})",

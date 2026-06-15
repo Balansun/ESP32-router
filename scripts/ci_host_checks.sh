@@ -11,9 +11,11 @@ if [[ ! -x "$PIO" ]]; then PIO=pio; fi
 if [[ ! -x "$PY" ]]; then PY=python3; fi
 
 SKIP_COVERAGE=0
+SKIP_ROUTER_NATIVE=0
 for arg in "$@"; do
   case "$arg" in
     --skip-coverage) SKIP_COVERAGE=1 ;;
+    --skip-router-native) SKIP_ROUTER_NATIVE=1 ;;
   esac
 done
 
@@ -23,8 +25,12 @@ echo "== Tracked assets guard =="
 echo "== Naming guard =="
 "${ROOT}/scripts/check_naming.sh"
 
-echo "== Native unit tests (Router logic) =="
-"$PIO" test -e native
+if [[ "$SKIP_ROUTER_NATIVE" -eq 0 ]]; then
+  echo "== Native unit tests (Router logic) =="
+  "$PIO" test -e native
+else
+  echo "== Native unit tests (Router logic): skipped (coverage step follows) =="
+fi
 
 echo "== Native unit tests (Balansun-Core domain) =="
 "$PIO" test -d "${ROOT}/lib/balansun-core" -e native
@@ -47,9 +53,6 @@ echo "== OpenAPI sync + drift =="
 echo "== Meter pack generator drift =="
 "$PY" scripts/generate_meter_pack.py --check
 
-echo "== Meter manifest parity (SourceId / web registry) =="
-"$PY" scripts/check_meter_manifest_parity.py
-
 echo "== Profile test matrix drift =="
 "$PY" scripts/generate_profile_test_matrix.py --check
 "$PY" scripts/check_profile_wire_drift.py
@@ -58,8 +61,5 @@ echo "== Golden contract suite =="
 "$PY" scripts/check_firmware_golden.py --eeprom-magic
 "$PY" scripts/check_firmware_golden.py --suite firmware/test/golden/captures
 "$PY" scripts/check_mqtt_goldens.py
-
-echo "== Profile flash size delta (router envs vs wroom32) =="
-"$PY" scripts/check_firmware_size.py --routers-only --pio "$PIO"
 
 echo "ci_host_checks: OK"

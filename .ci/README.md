@@ -6,6 +6,7 @@ GitHub Actions helpers that are **not** used for local bench / HIL runs. Shared 
 |--------|---------|
 | [`coverage_native.sh`](coverage_native.sh) | Native unit tests with ≥95% coverage gate (`firmware-native` job). |
 | [`ci_prerelease_tag.sh`](ci_prerelease_tag.sh) | Compute nightly tag from commit SHA (delegates to [`scripts/firmware_version_resolve.py`](../scripts/firmware_version_resolve.py)). |
+| [`package_release_bins.sh`](package_release_bins.sh) | Package all variant `firmware.bin` files + catalog + SHA256SUMS into `release/` (CI `firmware-build` + manual releases). |
 
 **Local pre-release-style builds** (CI on `main` uses `vX.Y.Z-nightly.<sha>`; local builds use branch slug):
 
