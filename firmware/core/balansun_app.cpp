@@ -332,6 +332,7 @@ void balansun_loop(void) {
     } else if (ssid.length() > 0 && !balansun_wifi_soft_ap_setup_active()) {
       const uint32_t wifi_poll_deadline = millis() + 500;
       while (WiFi.status() != WL_CONNECTED && (int32_t)(millis() - wifi_poll_deadline) < 0) {
+        balansun_http_pump_server(server, 4);
         delay(10);
         yield();
       }

@@ -28,11 +28,23 @@
 #include <ArduinoJson.h>
 #include "balansun_json.h"
 #include <vector>
+#include <balansun/platform/http_service.h>
 
 void ApplyPmqttJsonPayload(const String &msg);
 bool ApplyPmqttBindingsPayload(const String &topic, const String &msg, String *err);
 
 static unsigned long previousPmqttIngestMillis = 0;
+static unsigned long g_lastMqttConnectAttemptMs = 0;
+static unsigned long g_lastMqttFailLogMs = 0;
+static bool g_mqttHaLoggedConnected = false;
+
+namespace {
+constexpr uint32_t kMqttRoutineSocketTimeoutMs = 2500;
+constexpr unsigned long kMqttConnectBackoffMs = 5000UL;
+constexpr unsigned long kMqttFailLogIntervalMs = 30000UL;
+
+void mqtt_pump_http(int passes = 4) { balansun_http_pump_server(server, passes); }
+}  // namespace
 
 /** Pmqtt source: subscribe to discovery broker for metering (independent of HA publish period). */
 static bool pmqtt_ingest_mqtt_wanted() {
@@ -104,7 +116,12 @@ static bool mqttEnsureConnected() {
   if (mqtt_publish_period_sec == 0 && !pmqtt_ingest_mqtt_wanted()) return false;
   const String host = ip32ToDotted(MQTTIP);
   if (host.length() == 0 || host == "0.0.0.0") return false;
-  MqttClient.setTimeout(8000);
+  const unsigned long now = millis();
+  if (g_lastMqttConnectAttemptMs != 0 && (now - g_lastMqttConnectAttemptMs) < kMqttConnectBackoffMs) {
+    return false;
+  }
+  g_lastMqttConnectAttemptMs = now;
+  MqttClient.setTimeout(kMqttRoutineSocketTimeoutMs);
   clientMQTT.setServer(host.c_str(), MQTTPort);
   clientMQTT.setCallback(callback);
   /* Large Pmqtt JSON payloads exceed the PubSubClient 256 B default. */
@@ -112,14 +129,20 @@ static bool mqttEnsureConnected() {
     clientMQTT.setBufferSize(1536);
   }
   const String willTopic = mqttAvailabilityTopic();
+  mqtt_pump_http();
   if (!clientMQTT.connect(MQTTdeviceName.c_str(), MQTTUser.c_str(), MQTTPwd.c_str(), willTopic.c_str(), 0, true,
                           "offline")) {
-    Serial.print("MQTT connection failed, error code= ");
-    Serial.println(clientMQTT.state());
+    if (now - g_lastMqttFailLogMs >= kMqttFailLogIntervalMs) {
+      g_lastMqttFailLogMs = now;
+      Serial.print("MQTT connection failed, error code= ");
+      Serial.println(clientMQTT.state());
+    }
+    mqtt_pump_http();
     return false;
   }
   clientMQTT.publish(willTopic.c_str(), "online", true);
   subscribeMQTTCommands();
+  mqtt_pump_http();
   return true;
 }
 
@@ -236,8 +259,13 @@ void publishMqttLoop() {  // Periodic MQTT: HA publish and/or Pmqtt ingest subsc
   previousMqttMillis = tps;
   if (!mqttEnsureConnected()) return;
   if (clientMQTT.connected()) {
-    Serial.println(MQTTdeviceName + " connected");
-    Debug.println(MQTTdeviceName + " connected");
+    if (!g_mqttHaLoggedConnected) {
+      g_mqttHaLoggedConnected = true;
+      Serial.println(MQTTdeviceName + " connected");
+      Debug.println(MQTTdeviceName + " connected");
+    }
+  } else {
+    g_mqttHaLoggedConnected = false;
   }
   clientMQTT.loop();
 
@@ -246,14 +274,37 @@ void publishMqttLoop() {  // Periodic MQTT: HA publish and/or Pmqtt ingest subsc
   }
   SendDataToHomeAssistant();
   clientMQTT.loop();
+  mqtt_pump_http();
 }
 
 void pmqtt_mqtt_service_tick(void) {
   if (!pmqtt_ingest_mqtt_wanted()) return;
+  static unsigned long s_lastTickMs = 0;
+  const unsigned long now = millis();
+  if (s_lastTickMs != 0 && (now - s_lastTickMs) < 50UL) return;
+  s_lastTickMs = now;
+
+  /* HA state publish is driven by balansun_loop's 2s timer; avoid duplicate heavy work here. */
+  if (mqtt_publish_period_sec > 0) {
+    if (now - previousPmqttIngestMillis < 1000UL) return;
+    previousPmqttIngestMillis = now;
+    if (!clientMQTT.connected()) {
+      mqttEnsureConnected();
+      return;
+    }
+    for (int i = 0; i < 4; i++) {
+      clientMQTT.loop();
+      mqtt_pump_http(2);
+      yield();
+    }
+    return;
+  }
+
   publishMqttLoop();
   if (!clientMQTT.connected()) return;
-  for (int i = 0; i < 12; i++) {
+  for (int i = 0; i < 4; i++) {
     clientMQTT.loop();
+    mqtt_pump_http(2);
     yield();
   }
 }
