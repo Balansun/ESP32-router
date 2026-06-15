@@ -14,6 +14,7 @@
 #include "balansun_pin_map.h"
 #include "balansun_pin_map_apply.h"
 #include "balansun_product_profile.h"
+#include "balansun_persistence.h"
 static void api_wifi_append_public_fields(JsonObject wifi) {
   const bool setupAp = balansun_wifi_soft_ap_setup_active();
   wifi["setup_ap"] = setupAp;
@@ -495,6 +496,7 @@ void handle_firmware_ota_upload() {
   API_AUTH_GUARD();
   HTTPUpload &upload = server.upload();
   if (upload.status == UPLOAD_FILE_START) {
+    persistence_flush_all();
     if (server.hasArg("md5")) Update.setMD5(server.arg("md5").c_str());
     if (!Update.begin(UPDATE_SIZE_UNKNOWN)) {
       Update.printError(Serial);
@@ -504,7 +506,10 @@ void handle_firmware_ota_upload() {
       Update.printError(Serial);
     }
   } else if (upload.status == UPLOAD_FILE_END) {
-    if (!Update.end(true)) {
+    if (Update.end(true)) {
+      Serial.println(F("Firmware OTA complete — scheduling reboot"));
+      RequestReboot(500);
+    } else {
       Update.printError(Serial);
     }
   } else if (upload.status == UPLOAD_FILE_ABORTED) {

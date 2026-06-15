@@ -187,7 +187,9 @@ void balansun_setup(void) {
     ArduinoOTA.setPassword(arduinoOtaPassword.c_str());
   }
   /* Flush any deferred config before the firmware image is replaced. */
+  ArduinoOTA.setRebootOnSuccess(false);
   ArduinoOTA.onStart([]() { persistence_flush_all(); });
+  ArduinoOTA.onEnd([]() { RequestReboot(500); });
   ArduinoOTA.begin();
 
   Serial.println(String(F("Source: ")) + Source.c_str());
