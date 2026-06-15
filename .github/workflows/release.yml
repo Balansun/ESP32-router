@@ -15,6 +15,18 @@ on:
         description: Commit SHA to build and attach the release to
         required: true
         type: string
+      caller_run_id:
+        description: Workflow run ID that uploaded firmware-release-bins (parent firmware CI)
+        type: string
+        default: ""
+      skip_host_checks:
+        description: Skip host-checks when firmware CI already validated (nightly from main)
+        type: boolean
+        default: false
+      package_from_artifact:
+        description: Package GitHub Release from firmware-release-bins CI artifact (no rebuild)
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       draft:
@@ -35,20 +47,18 @@ permissions:
 jobs:
   # Native tests use platform=native; never share a workspace with ESP32 firmware builds.
   host-checks:
-    if: inputs.tag_name != '' || github.event_name == 'workflow_dispatch'
+    if: |
+      (inputs.tag_name != '' || github.event_name == 'workflow_dispatch') &&
+      inputs.skip_host_checks != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.target_sha != '' && inputs.target_sha || github.ref }}
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/pio-setup
         with:
-          python-version: "3.11"
-      - name: Install tools
-        run: |
-          pip install 'platformio>=6.1'
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ripgrep gcovr
+          install-ripgrep: "true"
+          install-gcovr: "true"
       - name: Generate profile matrix and firmware catalog
         run: python3 scripts/generate_profile_test_matrix.py
       - name: Host contract checks
@@ -56,29 +66,16 @@ jobs:
 
   build-release:
     needs: host-checks
-    if: inputs.tag_name != '' || github.event_name == 'workflow_dispatch'
+    if: |
+      always() &&
+      !cancelled() &&
+      (inputs.tag_name != '' || github.event_name == 'workflow_dispatch') &&
+      (needs.host-checks.result == 'success' || needs.host-checks.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.target_sha != '' && inputs.target_sha || github.ref }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: web/package-lock.json
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install PlatformIO
-        run: pip install 'platformio>=6.1'
-      - name: Generate install country data
-        run: node scripts/generate-install-countries.mjs
-      - name: Generate profile matrix and firmware catalog
-        run: python3 scripts/generate_profile_test_matrix.py
-      - name: Install web deps
-        run: npm ci
-        working-directory: web
       - name: Resolve firmware version and release tag
         run: |
           set -eu
@@ -90,11 +87,39 @@ jobs:
             echo "BALANSUN_FIRMWARE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
             echo "RELEASE_TAG_NAME=${GITHUB_REF_NAME}" >> "$GITHUB_ENV"
           fi
+      - name: Download prebuilt release binaries
+        if: inputs.package_from_artifact == true
+        uses: actions/download-artifact@v4
+        with:
+          name: firmware-release-bins
+          path: release/
+          run-id: ${{ inputs.caller_run_id != '' && inputs.caller_run_id || github.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/setup-node@v4
+        if: inputs.package_from_artifact != true
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - uses: ./.github/actions/pio-setup
+        if: inputs.package_from_artifact != true
+      - name: Generate install country data
+        if: inputs.package_from_artifact != true
+        run: node scripts/generate-install-countries.mjs
+      - name: Generate profile matrix and firmware catalog
+        if: inputs.package_from_artifact != true
+        run: python3 scripts/generate_profile_test_matrix.py
+      - name: Install web deps
+        if: inputs.package_from_artifact != true
+        run: npm ci
+        working-directory: web
       - name: Embed OpenAPI for firmware build
+        if: inputs.package_from_artifact != true
         run: |
           pip install pyyaml
           python3 scripts/embed_openapi.py
       - name: Build all product variant firmware
+        if: inputs.package_from_artifact != true
         env:
           VITE_DOCS_SITE_ORIGIN: https://balansun.clouded.fr
         run: |
@@ -104,7 +129,7 @@ jobs:
           # shellcheck disable=SC2086
           pio run $ENVS
       - name: Verify embedded firmware version (tag / main pre-release builds)
-        if: env.BALANSUN_FIRMWARE_VERSION != ''
+        if: env.BALANSUN_FIRMWARE_VERSION != '' && inputs.package_from_artifact != true
         run: |
           set -eu
           want="${BALANSUN_FIRMWARE_VERSION}"
@@ -114,6 +139,7 @@ jobs:
           fi
           echo "OK: firmware embeds Version=$want"
       - name: Flash and RAM size report
+        if: inputs.package_from_artifact != true
         run: |
           mkdir -p release
           {
@@ -127,41 +153,8 @@ jobs:
             echo ""
           } | tee release/size-report.txt
       - name: Package artifacts and checksums
-        run: |
-          set -eu
-          if [ -n "${BALANSUN_FIRMWARE_VERSION:-}" ]; then
-            VERSION="${BALANSUN_FIRMWARE_VERSION}"
-          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            VERSION="${GITHUB_REF_NAME#v}"
-          else
-            VERSION="$(grep '#define Version' firmware/core/balansun_board.h | sed -n 's/.*"\([^"]*\)".*/\1/p')"
-          fi
-          mkdir -p release
-          package_board() {
-            local env="$1"
-            local build=".pio/build/${env}"
-            local prefix="balansun-${VERSION}-${env}"
-            if [ -f "$build/firmware.bin" ]; then
-              cp "$build/firmware.bin" "release/${prefix}-firmware.bin"
-            else
-              echo "Missing $build/firmware.bin" >&2
-              exit 1
-            fi
-            if [ -f "$build/bootloader.bin" ]; then
-              cp "$build/bootloader.bin" "release/${prefix}-bootloader.bin"
-            fi
-            if [ -f "$build/partitions.bin" ]; then
-              cp "$build/partitions.bin" "release/${prefix}-partitions.bin"
-            fi
-          }
-          ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join(m['all_variant_envs']))")
-          for env in $ENVS; do
-            package_board "$env"
-          done
-          cp web/public/firmware-catalog.json release/firmware-catalog.json
-          (cd release && sha256sum ./*.bin) > release/SHA256SUMS.txt
-          cat release/SHA256SUMS.txt
-          ls -la release/
+        if: inputs.package_from_artifact != true
+        run: ./.ci/package_release_bins.sh
       - name: Upload workflow artifacts
         uses: actions/upload-artifact@v4
         with:

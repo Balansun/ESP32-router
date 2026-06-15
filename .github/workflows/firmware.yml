@@ -88,33 +88,48 @@ jobs:
               - '!*.md'
               - '!**/*.md'
 
+  prerelease-tag-early:
+    needs: changes
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
+      needs.changes.outputs.code_changed == 'true' &&
+      (needs.changes.outputs.firmware == 'true' || needs.changes.outputs.web == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.tag.outputs.tag_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compute pre-release tag
+        id: tag
+        run: echo "tag_name=$(./.ci/ci_prerelease_tag.sh '${{ github.sha }}')" >> "$GITHUB_OUTPUT"
+
   firmware-native:
     needs: changes
     if: needs.changes.outputs.code_changed == 'true' && needs.changes.outputs.firmware == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/pio-setup
         with:
-          python-version: "3.11"
-      - name: Install PlatformIO and ripgrep
-        run: |
-          pip install 'platformio>=6.1'
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq ripgrep
+          install-ripgrep: "true"
+          install-gcovr: "true"
       - name: Generate profile matrix and firmware catalog
         run: python3 scripts/generate_profile_test_matrix.py
       - name: Host contract checks (naming, tokens, assets, native, goldens)
-        run: ./scripts/ci_host_checks.sh --skip-coverage
+        run: ./scripts/ci_host_checks.sh --skip-coverage --skip-router-native
       - name: Native logic coverage (>=95% lines/functions/regions/branches)
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq gcovr
-          ./.ci/coverage_native.sh
+        run: ./.ci/coverage_native.sh
 
   firmware-build:
-    needs: changes
-    if: needs.changes.outputs.code_changed == 'true' && needs.changes.outputs.firmware == 'true'
+    needs: [changes, firmware-native, prerelease-tag-early]
+    if: |
+      always() &&
+      !cancelled() &&
+      needs.changes.outputs.code_changed == 'true' &&
+      needs.changes.outputs.firmware == 'true' &&
+      needs.firmware-native.result == 'success' &&
+      (needs.prerelease-tag-early.result == 'success' || needs.prerelease-tag-early.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -123,11 +138,7 @@ jobs:
           node-version: "22"
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-      - name: Install PlatformIO
-        run: pip install 'platformio>=6.1'
+      - uses: ./.github/actions/pio-setup
       - name: Generate install country data
         run: node scripts/generate-install-countries.mjs
       - name: Generate profile matrix and firmware catalog
@@ -135,11 +146,18 @@ jobs:
       - name: Install web deps
         run: npm ci
         working-directory: web
-      - name: Meter pack and profile matrix drift
+      - name: Resolve nightly firmware version
+        if: needs.prerelease-tag-early.outputs.tag_name != ''
         run: |
-          python3 scripts/generate_meter_pack.py --check
-          python3 scripts/generate_profile_test_matrix.py --check
-          python3 scripts/check_profile_wire_drift.py
+          set -eu
+          tag="${{ needs.prerelease-tag-early.outputs.tag_name }}"
+          echo "BALANSUN_FIRMWARE_VERSION=${tag#v}" >> "$GITHUB_ENV"
+          echo "RELEASE_TAG_NAME=${tag}" >> "$GITHUB_ENV"
+      - name: Embed OpenAPI for versioned nightly build
+        if: needs.prerelease-tag-early.outputs.tag_name != ''
+        run: |
+          pip install pyyaml
+          python3 scripts/embed_openapi.py
       - name: Build all product variant firmware
         env:
           VITE_DOCS_SITE_ORIGIN: https://balansun.clouded.fr
@@ -149,19 +167,55 @@ jobs:
           ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join('-e '+e for e in m['all_variant_envs']))")
           # shellcheck disable=SC2086
           pio run $ENVS
+      - name: Verify embedded firmware version (nightly)
+        if: env.BALANSUN_FIRMWARE_VERSION != ''
+        run: |
+          set -eu
+          want="${BALANSUN_FIRMWARE_VERSION}"
+          if ! strings .pio/build/wroom32/firmware.elf | grep -qF "$want"; then
+            echo "::error::Built firmware does not contain Version string $want"
+            exit 1
+          fi
+          echo "OK: firmware embeds Version=$want"
       - name: Flash size gate (all wroom32-class variants)
         run: ./scripts/check_variant_flash_sizes.sh
       - name: Profile flash size delta (all router envs vs wroom32)
-        run: python3 scripts/check_firmware_size.py --routers-only
+        run: python3 scripts/check_firmware_size.py --routers-only --require-built
       - name: Build ESP8266 action node firmware
         run: |
           pio platform install espressif8266
           pio run -e action_esp8266_r2_3relay -e action_esp8266_r2_2relay
-      - name: Upload firmware catalog
+      - name: Upload HIL firmware binaries
         uses: actions/upload-artifact@v4
         with:
-          name: firmware-catalog
-          path: web/public/firmware-catalog.json
+          name: firmware-hil-bin
+          path: |
+            .pio/build/hil/firmware.bin
+            .pio/build/hil/bootloader.bin
+            .pio/build/hil/partitions.bin
+      - name: Flash and RAM size report (nightly)
+        if: needs.prerelease-tag-early.outputs.tag_name != ''
+        run: |
+          mkdir -p release
+          {
+            echo "# Firmware size report"
+            echo ""
+            echo "## wroom32 (production full)"
+            pio run -e wroom32 --target size
+            echo ""
+            echo "## esp32s3 (alternate full)"
+            pio run -e esp32s3 --target size
+            echo ""
+          } | tee release/size-report.txt
+      - name: Package nightly release artifacts
+        if: needs.prerelease-tag-early.outputs.tag_name != ''
+        run: ./.ci/package_release_bins.sh
+      - name: Upload nightly release binaries
+        if: needs.prerelease-tag-early.outputs.tag_name != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: firmware-release-bins
+          path: release/
 
   web-contract:
     needs: changes
@@ -187,7 +241,6 @@ jobs:
       - name: Golden device fixture
         run: python3 scripts/check_firmware_golden.py firmware/test/golden/sample_device.json
 
-  # secrets cannot be referenced in job-level if: — gate via step env instead
   hil-gate:
     needs: [changes, firmware-native, firmware-build]
     if: |
@@ -224,13 +277,18 @@ jobs:
       needs.firmware-build.result == 'success'
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: ./.github/actions/pio-setup
+      - name: Install HIL pytest deps
+        run: pip install -r firmware/test/hil/requirements.txt
+      - name: Download prebuilt HIL firmware
+        uses: actions/download-artifact@v4
         with:
-          python-version: "3.11"
-      - name: Install Python tools
-        run: pip install 'platformio>=6.1' -r firmware/test/hil/requirements.txt
-      - name: Flash HIL firmware
-        run: pio run -e hil -t upload
+          name: firmware-hil-bin
+          path: .pio/build/hil
+      - name: Flash HIL firmware (no rebuild)
+        run: |
+          pio platform install espressif32@6.4.0
+          pio run -e hil -t nobuild -t upload
       - name: Wait for device
         env:
           BALANSUN_HIL_URL: ${{ secrets.BALANSUN_HIL_URL }}
@@ -298,26 +356,8 @@ jobs:
           echo "should_publish=true" >> "$GITHUB_OUTPUT"
           echo "All required jobs green and path filter matched — publishing pre-release."
 
-  prerelease-tag:
-    needs: [prerelease-gate]
-    if: |
-      always() &&
-      !cancelled() &&
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
-      needs.prerelease-gate.result == 'success' &&
-      needs.prerelease-gate.outputs.should_publish == 'true'
-    runs-on: ubuntu-latest
-    outputs:
-      tag_name: ${{ steps.tag.outputs.tag_name }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Compute pre-release tag
-        id: tag
-        run: echo "tag_name=$(./.ci/ci_prerelease_tag.sh '${{ github.sha }}')" >> "$GITHUB_OUTPUT"
-
   publish-prerelease:
-    needs: [prerelease-gate, prerelease-tag]
+    needs: [prerelease-gate, prerelease-tag-early, firmware-build]
     if: |
       always() &&
       !cancelled() &&
@@ -325,12 +365,16 @@ jobs:
       (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') &&
       needs.prerelease-gate.result == 'success' &&
       needs.prerelease-gate.outputs.should_publish == 'true' &&
-      needs.prerelease-tag.result == 'success'
+      needs.prerelease-tag-early.result == 'success' &&
+      needs.firmware-build.result == 'success'
     uses: ./.github/workflows/release.yml
     permissions:
       contents: write
     with:
-      tag_name: ${{ needs.prerelease-tag.outputs.tag_name }}
+      tag_name: ${{ needs.prerelease-tag-early.outputs.tag_name }}
       prerelease: true
       target_sha: ${{ github.sha }}
+      caller_run_id: ${{ github.run_id }}
+      skip_host_checks: true
+      package_from_artifact: true
     secrets: inherit

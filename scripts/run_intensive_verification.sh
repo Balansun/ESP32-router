@@ -24,6 +24,7 @@ ENVS=$("$PY" -c "import json; m=json.load(open('firmware/test/golden/profile_tes
 "$PIO" run $ENVS
 echo "== Flash size gates =="
 "${ROOT}/scripts/check_variant_flash_sizes.sh"
+"$PY" scripts/check_firmware_size.py --routers-only --require-built
 
 if [[ -n "${BALANSUN_HIL_URL:-}" && -n "${BALANSUN_UPLOAD_PORT:-}" ]]; then
   echo "== HIL profile matrix (USB) =="

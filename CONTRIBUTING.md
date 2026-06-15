@@ -14,6 +14,7 @@ Fast path (skips native gcovr coverage gate):
 ./scripts/ci_host_checks.sh --skip-coverage
 cd web && npm ci && npm run typecheck && npm run test:coverage
 pio run -e wroom32 && ./scripts/check_firmware_flash_size.sh wroom32
+python3 scripts/check_firmware_size.py --routers-only --require-built
 ```
 
 Recommended [pre-commit](https://pre-commit.com/): `pre-commit install` then each commit runs [Gitleaks](https://github.com/gitleaks/gitleaks) (`.gitleaks.toml`), naming and asset checks, and web typecheck.
@@ -22,8 +23,8 @@ Recommended [pre-commit](https://pre-commit.com/): `pre-commit install` then eac
 
 | Workflow | What it gates |
 |----------|----------------|
-| [Firmware](.github/workflows/firmware.yml) | `ci_host_checks.sh`, coverage, builds, web typecheck + Vitest 95%, optional HIL |
-| [Release](.github/workflows/release.yml) | Same host checks before release artifacts |
+| [Firmware](.github/workflows/firmware.yml) | `firmware-native` (contracts + native coverage), `firmware-build` (full matrix + flash gates), web Vitest, optional HIL (prebuilt `hil` flash) |
+| [Release](.github/workflows/release.yml) | Nightly from `main` packages CI artifacts (no rebuild); manual dispatch runs full host checks + build |
 
 ## Secrets and credentials
 
