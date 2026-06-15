@@ -10,7 +10,7 @@ namespace {
 
 void balansun_wdt_reset() {
 #ifndef BALANSUN_TARGET_ESP8266
-  balansun_wdt_reset();
+  esp_task_wdt_reset();
 #endif
 }
 
