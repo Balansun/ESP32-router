@@ -1107,6 +1107,63 @@ dialog[open].sheet-dialog {
   padding: 4px 8px;
 }
 
+.history-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  margin: 0 0 var(--space-3);
+  padding: 0;
+  border: 1px solid var(--c-border);
+  border-radius: var(--radius-md);
+  background: var(--c-surface-2);
+  min-width: 0;
+}
+.history-range legend {
+  padding: 0;
+}
+.history-range__segment {
+  flex: 1 1 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.5rem;
+  padding: var(--space-2) var(--space-3);
+  margin: 0;
+  border: none;
+  border-right: 1px solid var(--c-border);
+  background: transparent;
+  color: var(--c-fg);
+  cursor: pointer;
+  font-size: var(--fz-sm);
+  line-height: 1.3;
+  user-select: none;
+  text-align: center;
+}
+.history-range__segment:last-child {
+  border-right: none;
+}
+.history-range__segment:has(input:checked) {
+  background: color-mix(in srgb, var(--c-accent) 12%, var(--c-surface-2));
+  color: var(--c-accent);
+  font-weight: var(--fw-semibold);
+}
+.history-range__segment:has(input:focus-visible) {
+  outline: 2px solid var(--c-accent);
+  outline-offset: -2px;
+  z-index: 1;
+}
+.history-range__segment input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .channel-picker-field {
   margin-top: var(--space-2);
 }

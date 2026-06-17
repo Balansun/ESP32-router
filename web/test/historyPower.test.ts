@@ -21,6 +21,15 @@ import {
   buildHistoryDailyImportCsv,
 } from "../src/utils/historyDailyCsv";
 import type { HistoryEnergyDaily } from "../src/api/types";
+import {
+  formatHistoryChartMeta,
+  historyChartTitle,
+  historyMetricTabLabels,
+  historyPowerPointCount,
+  historyRangeOptions,
+  parseHistoryPowerWindow,
+} from "../src/utils/historyChartMeta";
+import { en } from "../src/i18n/locales/en";
 
 describe("historyPower", () => {
   it("powerHasSignal detects non-flat series", () => {
@@ -88,6 +97,57 @@ describe("historyPower", () => {
     expect(powerHistoryWindowHours("24h")).toBe(24);
     expect(powerHistoryWindowHours("48h")).toBe(48);
     expect(powerHistoryWindowHours("10m")).toBe(48);
+  });
+});
+
+describe("historyChartMeta", () => {
+  const T = en.history;
+
+  it("parseHistoryPowerWindow maps select values", () => {
+    expect(parseHistoryPowerWindow("10m")).toBe("10m");
+    expect(parseHistoryPowerWindow("24h")).toBe("24h");
+    expect(parseHistoryPowerWindow("48h")).toBe("48h");
+    expect(parseHistoryPowerWindow("other")).toBe("48h");
+  });
+
+  it("historyMetricTabLabels are static", () => {
+    expect(historyMetricTabLabels(T)).toEqual({
+      power: T.tabPower,
+      temp: T.tabTemp,
+      energy: T.tab1yEnergy,
+    });
+  });
+
+  it("historyChartTitle returns metric-only labels", () => {
+    expect(historyChartTitle(T, "power")).toBe(T.chartPowerTitle);
+    expect(historyChartTitle(T, "temp")).toBe(T.chartTempTitle);
+  });
+
+  it("formatHistoryChartMeta builds subtitle with points", () => {
+    expect(formatHistoryChartMeta(T, "24h", 300, 192, "en-US")).toBe(
+      "Last 24 hours · 5 min bins · 192 points",
+    );
+  });
+
+  it("formatHistoryChartMeta omits points while loading", () => {
+    expect(formatHistoryChartMeta(T, "48h", 300, null, "en-US")).toBe(
+      "Last 48 hours · 5 min bins",
+    );
+  });
+
+  it("historyPowerPointCount uses longest series", () => {
+    expect(
+      historyPowerPointCount({
+        house_active_w: [1, 2, 3],
+        triac_active_w: [1, 2],
+      }),
+    ).toBe(3);
+  });
+
+  it("historyRangeOptions expose short labels and sample periods", () => {
+    expect(historyRangeOptions(T).map((o) => o.id)).toEqual(["10m", "24h", "48h"]);
+    expect(historyRangeOptions(T)[0].samplePeriodS).toBe(2);
+    expect(historyRangeOptions(T)[1].samplePeriodS).toBe(300);
   });
 });
 

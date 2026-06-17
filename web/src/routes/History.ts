@@ -1,7 +1,7 @@
 import type { RouteCtx } from "../router";
 import { h } from "../utils/dom";
 import { api } from "../api/client";
-import { poll, deviceInfo } from "../state/store";
+import { poll, deviceInfo, localePref } from "../state/store";
 import { buildChart } from "../components/Chart";
 import { getStrings } from "../i18n";
 import { routeCleanup } from "../utils/routeLifecycle";
@@ -33,10 +33,21 @@ import {
   powerHasSignal,
   powerHistoryWindowHours,
 } from "../utils/historyPower";
+import { buildHistoryRangePicker } from "../components/HistoryRangePicker";
+import {
+  formatHistoryChartMeta,
+  historyChartTitle,
+  historyMetricTabLabels,
+  historyPowerPointCount,
+  historyRangeOption,
+  historyRangeOptions,
+  parseHistoryPowerWindow,
+  type HistoryPowerWindow,
+} from "../utils/historyChartMeta";
 import { buildPageHeader } from "../components/ui/pageHeader";
 import { pmqttBindingsMissing } from "../utils/pmqttBindings";
 
-type PowerHistoryWindow = "10m" | "24h" | "48h";
+type PowerHistoryWindow = HistoryPowerWindow;
 
 function histMaxPointsCap(): number {
   return deviceInfo.get()?.capabilities?.hist_max_points ?? 200;
@@ -88,7 +99,6 @@ export function mountHistory(ctx: RouteCtx): () => void {
   const T = getStrings();
 
   let powerWindow: PowerHistoryWindow = defaultPowerWindow();
-  let maxPoints = Math.min(200, histMaxPointsCap());
   let lastPower: HistoryPower | null = null;
   let lastEnergy: HistoryEnergyDaily | null = null;
   let measurementSourceOk: boolean | null = null;
@@ -96,27 +106,14 @@ export function mountHistory(ctx: RouteCtx): () => void {
   let tempSensorAvailable = false;
   let deviceDateTime: string | undefined;
   let tempTabVisible = false;
+  let restartPowerPoll: () => void = () => {};
 
-  const windowSelect = h("select", { class: "input" }) as HTMLSelectElement;
-  for (const opt of [
-    { v: "24h" as const, l: T.history.window24h },
-    { v: "48h" as const, l: T.history.window48h },
-    { v: "10m" as const, l: T.history.window10m },
-  ]) {
-    const o = h("option", { value: opt.v }, opt.l) as HTMLOptionElement;
-    if (opt.v === powerWindow) o.selected = true;
-    windowSelect.append(o);
-  }
-  const maxPointsInput = h("input", {
-    class: "input",
-    type: "number",
-    min: "32",
-    max: String(histMaxPointsCap()),
-    value: String(maxPoints),
-    style: "width:6rem;",
-  }) as HTMLInputElement;
+  const metricTabs = historyMetricTabLabels(T.history);
 
-  const powerTitleEl = h("h3", { class: "card__title" }, T.history.chart48hPowerTitle);
+  const powerTitleEl = h("h3", { class: "card__title" }, historyChartTitle(T.history, "power"));
+  const powerMetaEl = h("p", { class: "card__sub", "aria-live": "polite" });
+  const tempTitleEl = h("h3", { class: "card__title" }, historyChartTitle(T.history, "temp"));
+  const tempMetaEl = h("p", { class: "card__sub", "aria-live": "polite" });
 
   const pmqttBindingsBanner = h("p", {
     class: "banner banner--warn",
@@ -166,7 +163,7 @@ export function mountHistory(ctx: RouteCtx): () => void {
   });
 
   const tempChart = buildChart({
-    title: T.history.chart48hTempTitle,
+    title: "",
     yLabel: "°C",
     height: 220,
     intLegend: false,
@@ -219,7 +216,8 @@ export function mountHistory(ctx: RouteCtx): () => void {
         role: "tabpanel",
         id: "history-panel-pw",
       },
-      powerTitleEl,
+      h("div", { class: "card__head" }, powerTitleEl),
+      powerMetaEl,
       noDataBanner,
       powerChart.el,
     ),
@@ -230,6 +228,8 @@ export function mountHistory(ctx: RouteCtx): () => void {
         role: "tabpanel",
         id: "history-panel-temp",
       },
+      h("div", { class: "card__head" }, tempTitleEl),
+      tempMetaEl,
       tempChart.el,
     ),
     year: h(
@@ -266,9 +266,9 @@ export function mountHistory(ctx: RouteCtx): () => void {
     ),
   };
   const labels: Record<Tab, string> = {
-    pw: T.history.tab48hPower,
-    temp: T.history.tab48hTemp,
-    year: T.history.tab1yEnergy,
+    pw: metricTabs.power,
+    temp: metricTabs.temp,
+    year: metricTabs.energy,
   };
   const panelIds: Record<Tab, string> = {
     pw: "history-panel-pw",
@@ -296,6 +296,49 @@ export function mountHistory(ctx: RouteCtx): () => void {
   }
   buttons.temp.hidden = true;
 
+  const rangePicker = buildHistoryRangePicker({
+    name: "history-power-window",
+    ariaLabel: T.history.rangeAria,
+    value: powerWindow,
+    options: historyRangeOptions(T.history).map((o) => ({
+      id: o.id,
+      label: o.shortLabel,
+    })),
+    onChange: (value) => {
+      powerWindow = parseHistoryPowerWindow(value);
+      syncChartHeaders(lastPower);
+      void loadPower();
+      restartPowerPoll();
+    },
+  });
+  const rangePickerEl = rangePicker.el;
+
+  function chartLocale(): string {
+    return localePref.get() === "fr" ? "fr-FR" : "en-US";
+  }
+
+  function syncChartHeaders(power: HistoryPower | null) {
+    powerTitleEl.textContent = historyChartTitle(T.history, "power");
+    tempTitleEl.textContent = historyChartTitle(T.history, "temp");
+    const rangeOpt = historyRangeOption(T.history, powerWindow);
+    const samplePeriodS = power?.sample_period_s ?? rangeOpt.samplePeriodS;
+    const pointCount = power ? historyPowerPointCount(power) : null;
+    const meta = formatHistoryChartMeta(
+      T.history,
+      powerWindow,
+      samplePeriodS,
+      pointCount,
+      chartLocale(),
+    );
+    powerMetaEl.textContent = meta;
+    tempMetaEl.textContent = meta;
+  }
+  syncChartHeaders(null);
+
+  function syncRangePickerVisibility() {
+    rangePickerEl.hidden = activeTab === "year";
+  }
+
   for (const tab of tabs) {
     panelsRoot.append(panes[tab]);
     panes[tab].hidden = tab !== "pw";
@@ -315,6 +358,7 @@ export function mountHistory(ctx: RouteCtx): () => void {
       buttons[t].setAttribute("aria-selected", isActive ? "true" : "false");
       panes[t].hidden = !isActive;
     }
+    syncRangePickerVisibility();
     queueMicrotask(() => {
       if (tab === "pw") powerChart.resize();
       else if (tab === "temp") tempChart.resize();
@@ -343,14 +387,8 @@ export function mountHistory(ctx: RouteCtx): () => void {
 
   function applyPower(j: HistoryPower) {
     lastPower = j;
-    const is10m = j.window === "10m" || powerWindow === "10m";
-    const is24h = !is10m && (j.window === "24h" || powerWindow === "24h");
-    powerTitleEl.textContent = is10m
-      ? T.history.chart10mPowerTitle
-      : is24h
-        ? T.history.chart24hPowerTitle
-        : T.history.chart48hPowerTitle;
-
+    syncChartHeaders(j);
+    const is10m = powerWindow === "10m";
     const m = j.house_active_w || [];
     const tr = hasTriac() ? j.triac_active_w || [] : [];
     const vaM = j.house_apparent_va || [];
@@ -380,12 +418,12 @@ export function mountHistory(ctx: RouteCtx): () => void {
     const tempLabel = deviceInfo.get()?.temperature_label || T.home.temperature;
     tempChart.setSeriesLabels([tempLabel]);
     if (tempTabVisible && historySeriesHasProbeTemp(t)) {
-      const is10m = j.window === "10m" || powerWindow === "10m";
-      const xst = is10m
+      const is10mTemp = powerWindow === "10m";
+      const xst = is10mTemp
         ? buildPowerTimeAxisSeconds(t.length, periodS)
         : buildPowerTimeAxisHours(t.length, windowHours);
       tempChart.setXFormat((v) =>
-        is10m ? formatPowerAxisSeconds(v) : formatPowerAxisHours(v),
+        is10mTemp ? formatPowerAxisSeconds(v) : formatPowerAxisHours(v),
       );
       tempChart.setData([xst, t] as unknown as [number[], number[]]);
     }
@@ -485,37 +523,23 @@ export function mountHistory(ctx: RouteCtx): () => void {
     });
   }
 
-  const toolbar = h(
-    "div",
-    { class: "row spread", style: "flex-wrap:wrap;gap:8px;margin-bottom:12px;" },
-    h("label", { class: "field" }, T.history.windowLabel, windowSelect),
-    h("label", { class: "field" }, T.history.maxPoints, maxPointsInput),
-    h(
-      "button",
-      { type: "button", class: "btn btn--ghost", onClick: () => void loadPower() },
-      T.retry,
-    ),
-    h(
-      "button",
-      { type: "button", class: "btn btn--ghost", onClick: downloadCsv },
-      T.history.exportCsv,
-    ),
-    h(
-      "button",
-      { type: "button", class: "btn btn--danger", onClick: confirmReset },
-      T.history.resetHistory,
-    ),
+  const exportBtn = h(
+    "button",
+    { type: "button", class: "btn btn--ghost", onClick: downloadCsv },
+    T.history.exportCsv,
+  );
+  const resetBtn = h(
+    "button",
+    { type: "button", class: "btn btn--danger", onClick: confirmReset },
+    T.history.resetHistory,
   );
 
   async function loadPower() {
-    const sel = windowSelect.value;
-    powerWindow = sel === "10m" ? "10m" : sel === "24h" ? "24h" : "48h";
-    const cap = histMaxPointsCap();
-    maxPointsInput.max = String(cap);
-    maxPoints = Math.max(32, Math.min(cap, parseInt(maxPointsInput.value, 10) || 200));
-    maxPointsInput.value = String(maxPoints);
+    powerWindow = parseHistoryPowerWindow(rangePicker.getValue());
+    rangePicker.setValue(powerWindow);
+    syncChartHeaders(lastPower);
     try {
-      const j = await api.getHistoryPower(powerWindow, maxPoints, { signal });
+      const j = await api.getHistoryPower(powerWindow, histMaxPointsCap(), { signal });
       applyPower(j);
     } catch {
       toast(T.history.loadError, "error");
@@ -540,13 +564,14 @@ export function mountHistory(ctx: RouteCtx): () => void {
     }
   }
 
-  maxPointsInput.addEventListener("change", () => void loadPower());
-
   outlet.append(
-    buildPageHeader({ title: T.history.title }),
+    buildPageHeader({
+      title: T.history.title,
+      actions: [exportBtn, resetBtn],
+    }),
     pmqttBindingsBanner,
-    toolbar,
     tabsEl,
+    rangePickerEl,
     panelsRoot,
   );
 
@@ -613,7 +638,7 @@ export function mountHistory(ctx: RouteCtx): () => void {
     const powerPollMs = () => (powerWindow === "10m" ? 12_000 : 60_000);
 
     let powerPollTimer: ReturnType<typeof poll> | null = null;
-    function restartPowerPoll() {
+    restartPowerPoll = () => {
       powerPollTimer?.stop();
       powerPollTimer = poll(
         async () => {
@@ -624,12 +649,9 @@ export function mountHistory(ctx: RouteCtx): () => void {
         { immediate: false },
       );
       scope.trackPoll(powerPollTimer);
-    }
+    };
     restartPowerPoll();
-    windowSelect.addEventListener("change", () => {
-      void loadPower();
-      restartPowerPoll();
-    });
+    syncRangePickerVisibility();
 
     scope.trackPoll(
       poll(
