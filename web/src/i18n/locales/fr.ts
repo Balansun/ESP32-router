@@ -234,7 +234,6 @@ export const fr = {
     tab1yEnergy: "90j kWh",
     tabsAria: "Graphiques historique",
     chart10mPowerTitle: "Puissance active — 10 dernières minutes",
-    chart10mPowerTitle: "Puissance active — 10 dernières minutes",
     chart24hPowerTitle: "Puissance active — 24 heures",
     chart48hPowerTitle: "Puissance active — 48 heures",
     chart24hTempTitle: "Température — 24 heures",
