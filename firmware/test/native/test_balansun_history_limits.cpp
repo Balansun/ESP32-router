@@ -22,6 +22,10 @@ TEST(BalansunPwrHistLimits, DefaultWindowMatchesRingDepth) {
 #endif
 }
 
+TEST(BalansunPwrHistLimits, Window24hUses288FiveMinuteSlots) {
+  EXPECT_EQ((24 * 60) / 5, 288);
+}
+
 TEST(BalansunPwrHistLimits, HistoryTemperatureSampleKeepsOneDecimal) {
   EXPECT_FLOAT_EQ(balansun_history_temperature_sample(19.04f), 19.0f);
   EXPECT_FLOAT_EQ(balansun_history_temperature_sample(19.06f), 19.1f);

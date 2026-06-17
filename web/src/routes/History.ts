@@ -31,6 +31,7 @@ import {
   formatPowerAxisSeconds,
   padSeries,
   powerHasSignal,
+  powerHistoryWindowHours,
 } from "../utils/historyPower";
 import { buildPageHeader } from "../components/ui/pageHeader";
 import { pmqttBindingsMissing } from "../utils/pmqttBindings";
@@ -343,9 +344,12 @@ export function mountHistory(ctx: RouteCtx): () => void {
   function applyPower(j: HistoryPower) {
     lastPower = j;
     const is10m = j.window === "10m" || powerWindow === "10m";
+    const is24h = !is10m && (j.window === "24h" || powerWindow === "24h");
     powerTitleEl.textContent = is10m
       ? T.history.chart10mPowerTitle
-      : T.history.chart48hPowerTitle;
+      : is24h
+        ? T.history.chart24hPowerTitle
+        : T.history.chart48hPowerTitle;
 
     const m = j.house_active_w || [];
     const tr = hasTriac() ? j.triac_active_w || [] : [];
@@ -353,9 +357,10 @@ export function mountHistory(ctx: RouteCtx): () => void {
     const vaT = hasTriac() ? j.triac_apparent_va || [] : [];
     const n = Math.max(m.length, tr.length, vaM.length, vaT.length, 1);
     const periodS = j.sample_period_s || (is10m ? 2 : 300);
+    const windowHours = powerHistoryWindowHours(powerWindow);
     const xs = is10m
       ? buildPowerTimeAxisSeconds(n, periodS)
-      : buildPowerTimeAxisHours(n, periodS);
+      : buildPowerTimeAxisHours(n, windowHours);
 
     powerChart.setXFormat((v) =>
       is10m ? formatPowerAxisSeconds(v) : formatPowerAxisHours(v),
@@ -378,7 +383,7 @@ export function mountHistory(ctx: RouteCtx): () => void {
       const is10m = j.window === "10m" || powerWindow === "10m";
       const xst = is10m
         ? buildPowerTimeAxisSeconds(t.length, periodS)
-        : buildPowerTimeAxisHours(t.length, periodS);
+        : buildPowerTimeAxisHours(t.length, windowHours);
       tempChart.setXFormat((v) =>
         is10m ? formatPowerAxisSeconds(v) : formatPowerAxisHours(v),
       );

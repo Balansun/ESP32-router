@@ -44,17 +44,24 @@ export function buildPowerTimeAxisSeconds(
   });
 }
 
-/** X axis for 48h window: hours before now (negative). */
+/** Map GET /history/power `window` to chart span in hours. */
+export function powerHistoryWindowHours(window: string): 24 | 48 {
+  if (window === "24h") return 24;
+  return 48;
+}
+
+/** X axis for 24h/48h windows: hours before now (negative), evenly spaced. */
 export function buildPowerTimeAxisHours(
   pointCount: number,
-  samplePeriodS: number,
+  windowHours: number,
 ): number[] {
   const n = Math.max(1, pointCount);
-  const period = samplePeriodS > 0 ? samplePeriodS : 300;
-  return Array.from(
-    { length: n },
-    (_, i) => -(((n - 1 - i) * period) / 3600),
-  );
+  const span = windowHours > 0 ? windowHours : 48;
+  if (n === 1) return [0];
+  return Array.from({ length: n }, (_, i) => {
+    const v = -(span * (n - 1 - i)) / (n - 1);
+    return v === 0 ? 0 : v;
+  });
 }
 
 export function formatPowerAxisSeconds(seconds: number): string {

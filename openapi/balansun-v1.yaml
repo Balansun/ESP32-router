@@ -153,7 +153,9 @@ paths:
       summary: Power history time series
       description: |
         `window=48h` (default) returns 5-minute buckets with temperature series.
+        `window=24h` returns the most recent 24 hours of 5-minute buckets.
         `window=10m` returns 2-second buckets with apparent VA arrays.
+        `sample_period_s` is the native bucket size (300 for 24h/48h, 2 for 10m).
       parameters:
         - $ref: "#/components/parameters/historyWindow"
         - $ref: "#/components/parameters/historyMaxPoints"
@@ -1717,7 +1719,7 @@ components:
       required: false
       schema:
         type: string
-        enum: [48h, 10m]
+        enum: [24h, 48h, 10m]
         default: 48h
       description: History time window
     historyMaxPoints:

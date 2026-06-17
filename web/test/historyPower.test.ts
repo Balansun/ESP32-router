@@ -8,6 +8,7 @@ import {
   maxAbs,
   padSeries,
   powerHasSignal,
+  powerHistoryWindowHours,
 } from "../src/utils/historyPower";
 import {
   energyDayIsoDates as energyDates,
@@ -65,12 +66,28 @@ describe("historyPower", () => {
   });
 
   it("buildPowerTimeAxisHours and formatPowerAxisHours", () => {
-    const xs = buildPowerTimeAxisHours(2, 3600);
-    expect(xs[0]).toBeCloseTo(-1, 5);
+    const xs = buildPowerTimeAxisHours(2, 24);
+    expect(xs[0]).toBeCloseTo(-24, 5);
     expect(xs[1]).toBeCloseTo(0, 5);
     expect(formatPowerAxisHours(0)).toBe("0");
     expect(formatPowerAxisHours(-1)).toBe("1 h");
     expect(formatPowerAxisHours(-1.25)).toBe("1h15");
+  });
+
+  it("buildPowerTimeAxisHours spans selected window regardless of point count", () => {
+    const xs24 = buildPowerTimeAxisHours(200, 24);
+    expect(xs24[0]).toBeCloseTo(-24, 5);
+    expect(xs24[xs24.length - 1]).toBe(0);
+
+    const xs48 = buildPowerTimeAxisHours(600, 48);
+    expect(xs48[0]).toBeCloseTo(-48, 5);
+    expect(xs48[xs48.length - 1]).toBe(0);
+  });
+
+  it("powerHistoryWindowHours maps API window labels", () => {
+    expect(powerHistoryWindowHours("24h")).toBe(24);
+    expect(powerHistoryWindowHours("48h")).toBe(48);
+    expect(powerHistoryWindowHours("10m")).toBe(48);
   });
 });
 

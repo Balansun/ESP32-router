@@ -237,7 +237,12 @@ void handle_get_history_power() {
   } else {
     const int iS = IdxStockPW;
     const int ring5mn = kBalansunPwrHist5mnSlots;
-    int step = (ring5mn + maxPts - 1) / maxPts;
+    int ringSpan = ring5mn;
+    if (w == "24h") {
+      const int slots24h = (24 * 60) / 5;
+      if (slots24h < ringSpan) ringSpan = slots24h;
+    }
+    int step = (ringSpan + maxPts - 1) / maxPts;
     if (step < 1) step = 1;
     out.reserve(256 + (size_t)maxPts * 36);
     out += F("{\"source\":\"");
@@ -247,11 +252,11 @@ void handle_get_history_power() {
     out += F("\",\"max_points\":");
     out += maxPts;
     out += F(",\"sample_period_s\":300,");
-    append_i32_series(out, "house_active_w", tabPwHouse_5mn, iS, ring5mn, step, maxPts);
+    append_i32_series(out, "house_active_w", tabPwHouse_5mn, iS, ringSpan, step, maxPts);
     out += ',';
-    append_i32_series(out, "triac_active_w", tabPw_Triac_5mn, iS, ring5mn, step, maxPts);
+    append_i32_series(out, "triac_active_w", tabPw_Triac_5mn, iS, ringSpan, step, maxPts);
     out += ',';
-    append_f32_series(out, "temperature_series_c", tabTemperature_5mn, iS, ring5mn, step, maxPts);
+    append_f32_series(out, "temperature_series_c", tabTemperature_5mn, iS, ringSpan, step, maxPts);
     out += '}';
   }
   if (out.length() < 3) {
