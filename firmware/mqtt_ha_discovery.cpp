@@ -94,8 +94,10 @@ static String mqttHaMetricFriendlyName(const String &key) {
   if (key == "house_energy_export_wh") return houseLabel + " energy export";
   if (key == "house_day_energy_import_wh") return houseLabel + " day energy import";
   if (key == "house_day_energy_export_wh") return houseLabel + " day energy export";
-  if (key == "house_yesterday_energy_import_wh") return houseLabel + " yesterday energy import";
-  if (key == "house_yesterday_energy_export_wh") return houseLabel + " yesterday energy export";
+  if (key.indexOf("_yesterday_energy_") >= 0) {
+    const String &label = (key.charAt(0) == 's') ? secondLabel : houseLabel;
+    return label + (key.indexOf("_import_wh") >= 0 ? " yesterday energy import" : " yesterday energy export");
+  }
   if (key == "second_active_import_w") return secondLabel + " active import";
   if (key == "second_active_export_w") return secondLabel + " active export";
   if (key == "second_voltage_v") return secondLabel + " voltage";
@@ -105,8 +107,6 @@ static String mqttHaMetricFriendlyName(const String &key) {
   if (key == "second_energy_export_wh") return secondLabel + " energy export";
   if (key == "second_day_energy_import_wh") return secondLabel + " day energy import";
   if (key == "second_day_energy_export_wh") return secondLabel + " day energy export";
-  if (key == "second_yesterday_energy_import_wh") return secondLabel + " yesterday energy import";
-  if (key == "second_yesterday_energy_export_wh") return secondLabel + " yesterday energy export";
   if (key == "mains_frequency_hz") return String("Mains frequency");
   if (key == "temperature_c") return String("Temperature");
   return String(MQTTdeviceName) + " " + key;

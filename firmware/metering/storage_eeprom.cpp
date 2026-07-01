@@ -19,6 +19,7 @@
 #include "balansun_device_id.h"
 #include "balansun_pin_map.h"
 #include "balansun_source.h"
+#include "balansun_daily_energy_logic.h"
 #include "Actions.h"
 #include <balansun/load_profile.h>
 #include <EEPROM.h>
@@ -677,6 +678,32 @@ bool eepromHistoryReadDailyMetrics(
   if (logicalDayIdx < 0 || logicalDayIdx >= cap) return false;
   const int ringIdx = (idxPromDuJour + logicalDayIdx + 1) % cap;
   history_read_slot(ringIdx, ch1ImportWh, ch1ExportWh, ch2ImportWh, ch2ExportWh);
+  return true;
+}
+
+bool balansun_yesterday_daily_metrics(long *houseImportWh,
+                                      long *houseExportWh,
+                                      long *secondImportWh,
+                                      long *secondExportWh) {
+  if (!houseImportWh || !houseExportWh || !secondImportWh || !secondExportWh) return false;
+  *houseImportWh = 0;
+  *houseExportWh = 0;
+  *secondImportWh = 0;
+  *secondExportWh = 0;
+  const int cap = history_days_capacity();
+  if (cap < 2) return true;
+  long ch1Import = 0;
+  long ch1Export = 0;
+  long ch2Import = 0;
+  long ch2Export = 0;
+  if (!eepromHistoryReadDailyMetrics(cap - 2, ch1Import, ch1Export, ch2Import, ch2Export)) {
+    return true;
+  }
+  balansun_daily_energy_sanitize_metrics(ch1Import, ch1Export, ch2Import, ch2Export);
+  *houseImportWh = ch1Import;
+  *houseExportWh = ch1Export;
+  *secondImportWh = ch2Import;
+  *secondExportWh = ch2Export;
   return true;
 }
 
