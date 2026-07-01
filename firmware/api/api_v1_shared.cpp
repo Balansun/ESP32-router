@@ -10,7 +10,6 @@
 #include "balansun_triac_calibration_logic.h"
 #include "metering/pmqtt_bindings.h"
 #include "balansun_temperature.h"
-#include "balansun_daily_energy_logic.h"
 #include "balansun_product_caps.h"
 #include "balansun_config_cap_logic.h"
 #include "balansun_self_test_safety_runtime.h"
@@ -631,18 +630,6 @@ void api_append_measurements_object(JsonObject doc) {
   doc["house"]["apparent_export_va"] = r.house_apparent_export_va;
   doc["house"]["energy_day_import_wh"] = r.house_day_energy_import_wh;
   doc["house"]["energy_day_export_wh"] = r.house_day_energy_export_wh;
-  {
-    long houseYesterdayImportWh = 0;
-    long houseYesterdayExportWh = 0;
-    long secondYesterdayImportWh = 0;
-    long secondYesterdayExportWh = 0;
-    balansun_yesterday_daily_metrics(&houseYesterdayImportWh, &houseYesterdayExportWh,
-                                     &secondYesterdayImportWh, &secondYesterdayExportWh);
-    doc["house"]["energy_yesterday_import_wh"] = houseYesterdayImportWh;
-    doc["house"]["energy_yesterday_export_wh"] = houseYesterdayExportWh;
-    doc["second"]["energy_yesterday_import_wh"] = secondYesterdayImportWh;
-    doc["second"]["energy_yesterday_export_wh"] = secondYesterdayExportWh;
-  }
   doc["house"]["energy_total_import_wh"] = r.house_energy_import_wh;
   doc["house"]["energy_total_export_wh"] = r.house_energy_export_wh;
   {

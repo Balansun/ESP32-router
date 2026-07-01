@@ -115,6 +115,10 @@ static String mqttHaMetricFriendlyName(const String &key) {
 static constexpr size_t kMqttHaDiscoveryBuf = 768;
 static constexpr size_t kMqttHaDiscoveryPool = 768;
 
+static void DevicePastDayWhToDiscover(const char *name) {
+  DeviceToDiscover(name, "Wh", "energy", "0", false);
+}
+
 void sendMQTTDiscoveryMsg_global() {
   if (!mqtt_ensure_publish_buffer()) return;
   if (balansun_cap_mqtt_triac_channel_block()) {
@@ -127,8 +131,8 @@ void sendMQTTDiscoveryMsg_global() {
     DeviceToDiscover("second_energy_export_wh", "Wh", "energy", "0");
     DeviceToDiscover("second_day_energy_import_wh", "Wh", "energy", "0");
     DeviceToDiscover("second_day_energy_export_wh", "Wh", "energy", "0");
-    DeviceToDiscover("second_yesterday_energy_import_wh", "Wh", "energy", "0", false);
-    DeviceToDiscover("second_yesterday_energy_export_wh", "Wh", "energy", "0", false);
+    DevicePastDayWhToDiscover("second_yesterday_energy_import_wh");
+    DevicePastDayWhToDiscover("second_yesterday_energy_export_wh");
     DeviceToDiscover("mains_frequency_hz", "Hz", "frequency", "2");
   }
   for (int s = 0; s < kBalansunTempMaxSensors; s++) {
@@ -162,8 +166,8 @@ void sendMQTTDiscoveryMsg_global() {
   DeviceToDiscover("house_energy_export_wh", "Wh", "energy", "0");
   DeviceToDiscover("house_day_energy_import_wh", "Wh", "energy", "0");
   DeviceToDiscover("house_day_energy_export_wh", "Wh", "energy", "0");
-  DeviceToDiscover("house_yesterday_energy_import_wh", "Wh", "energy", "0", false);
-  DeviceToDiscover("house_yesterday_energy_export_wh", "Wh", "energy", "0", false);
+  DevicePastDayWhToDiscover("house_yesterday_energy_import_wh");
+  DevicePastDayWhToDiscover("house_yesterday_energy_export_wh");
 
   DeviceToDiscover("triac_open_percent", "%", "power_factor", "0");  // HA accepts power_factor for 0–100 % triac opening
   DeviceBinToDiscover("adc_clipping", "Analog ADC clipping");
@@ -203,7 +207,6 @@ void sendMQTTDiscoveryMsg_global() {
 }  // END OF sendMQTTDiscoveryMsg_global
 
 void DeviceToDiscover(String Name, String Unit, String Class, String Round, bool whTotalIncreasing) {
-
   String StateTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "_state";
   BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool1;  // this is the Payload json format

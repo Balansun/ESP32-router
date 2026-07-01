@@ -19,7 +19,6 @@
 #include "balansun_device_id.h"
 #include "balansun_pin_map.h"
 #include "balansun_source.h"
-#include "balansun_daily_energy_logic.h"
 #include "Actions.h"
 #include <balansun/load_profile.h>
 #include <EEPROM.h>
@@ -699,7 +698,10 @@ bool balansun_yesterday_daily_metrics(long *houseImportWh,
   if (!eepromHistoryReadDailyMetrics(cap - 2, ch1Import, ch1Export, ch2Import, ch2Export)) {
     return true;
   }
-  balansun_daily_energy_sanitize_metrics(ch1Import, ch1Export, ch2Import, ch2Export);
+  if (ch1Import < 0) ch1Import = 0;
+  if (ch1Export < 0) ch1Export = 0;
+  if (ch2Import < 0) ch2Import = 0;
+  if (ch2Export < 0) ch2Export = 0;
   *houseImportWh = ch1Import;
   *houseExportWh = ch1Export;
   *secondImportWh = ch2Import;
