@@ -7,6 +7,7 @@
 #include "balansun_product_caps.h"
 #include "balansun_pwr_hist_limits.h"
 #include "balansun_temperature.h"
+#include "balansun_daily_energy_logic.h"
 #include <cstring>
 #include <vector>
 
@@ -22,10 +23,7 @@ void copy_date_iso_field(const String &src, char *dst, size_t cap) {
 }
 
 void sanitize_daily_metrics(long &ch1ImportWh, long &ch1ExportWh, long &ch2ImportWh, long &ch2ExportWh) {
-  if (ch1ImportWh < 0) ch1ImportWh = 0;
-  if (ch1ExportWh < 0) ch1ExportWh = 0;
-  if (ch2ImportWh < 0) ch2ImportWh = 0;
-  if (ch2ExportWh < 0) ch2ExportWh = 0;
+  balansun_daily_energy_sanitize_metrics(ch1ImportWh, ch1ExportWh, ch2ImportWh, ch2ExportWh);
 }
 
 bool parse_iso_date_ymd(const String &iso, int &yyyymmdd) {

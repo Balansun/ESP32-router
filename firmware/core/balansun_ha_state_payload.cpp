@@ -13,6 +13,7 @@
 #include "tempo_rte_logic.h"
 #include "api.h"
 #include "balansun_temperature.h"
+#include "balansun_daily_energy_logic.h"
 
 int balansun_compute_source_health_score(void) { return balansun_source_health_score_now(); }
 
@@ -39,6 +40,12 @@ void balansun_append_measurements_diagnostics(JsonObject diag) {
 void balansun_append_ha_state_payload(JsonObject doc) {
   doc["source"] = Source;
   doc["device_uid"] = balansun_device_uid();
+  long houseYesterdayImportWh = 0;
+  long houseYesterdayExportWh = 0;
+  long secondYesterdayImportWh = 0;
+  long secondYesterdayExportWh = 0;
+  balansun_yesterday_daily_metrics(&houseYesterdayImportWh, &houseYesterdayExportWh,
+                                   &secondYesterdayImportWh, &secondYesterdayExportWh);
   if (balansun_source_logic_second_channel_snapshot_visible(
           second_voltage_v, second_active_import_w, second_active_export_w, second_current_a)) {
     doc["second_active_import_w"] = second_active_import_w;
@@ -50,6 +57,8 @@ void balansun_append_ha_state_payload(JsonObject doc) {
     doc["second_energy_export_wh"] = second_energy_export_wh;
     doc["second_day_energy_import_wh"] = second_day_energy_import_wh;
     doc["second_day_energy_export_wh"] = second_day_energy_export_wh;
+    doc["second_yesterday_energy_import_wh"] = secondYesterdayImportWh;
+    doc["second_yesterday_energy_export_wh"] = secondYesterdayExportWh;
     doc["second_apparent_import_va"] = second_apparent_import_va;
     doc["second_apparent_export_va"] = second_apparent_export_va;
     doc["mains_frequency_hz"] = mains_frequency_hz;
@@ -81,6 +90,8 @@ void balansun_append_ha_state_payload(JsonObject doc) {
   doc["house_energy_export_wh"] = house_energy_export_wh;
   doc["house_day_energy_import_wh"] = house_day_energy_import_wh;
   doc["house_day_energy_export_wh"] = house_day_energy_export_wh;
+  doc["house_yesterday_energy_import_wh"] = houseYesterdayImportWh;
+  doc["house_yesterday_energy_export_wh"] = houseYesterdayExportWh;
   doc["house_apparent_import_va"] = house_apparent_import_va;
   doc["house_apparent_export_va"] = house_apparent_export_va;
 

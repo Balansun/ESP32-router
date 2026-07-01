@@ -94,6 +94,10 @@ static String mqttHaMetricFriendlyName(const String &key) {
   if (key == "house_energy_export_wh") return houseLabel + " energy export";
   if (key == "house_day_energy_import_wh") return houseLabel + " day energy import";
   if (key == "house_day_energy_export_wh") return houseLabel + " day energy export";
+  if (key.indexOf("_yesterday_energy_") >= 0) {
+    const String &label = (key.charAt(0) == 's') ? secondLabel : houseLabel;
+    return label + (key.indexOf("_import_wh") >= 0 ? " yesterday energy import" : " yesterday energy export");
+  }
   if (key == "second_active_import_w") return secondLabel + " active import";
   if (key == "second_active_export_w") return secondLabel + " active export";
   if (key == "second_voltage_v") return secondLabel + " voltage";
@@ -111,6 +115,10 @@ static String mqttHaMetricFriendlyName(const String &key) {
 static constexpr size_t kMqttHaDiscoveryBuf = 768;
 static constexpr size_t kMqttHaDiscoveryPool = 768;
 
+static void DevicePastDayWhToDiscover(const char *name) {
+  DeviceToDiscover(name, "Wh", "energy", "0", false);
+}
+
 void sendMQTTDiscoveryMsg_global() {
   if (!mqtt_ensure_publish_buffer()) return;
   if (balansun_cap_mqtt_triac_channel_block()) {
@@ -123,6 +131,8 @@ void sendMQTTDiscoveryMsg_global() {
     DeviceToDiscover("second_energy_export_wh", "Wh", "energy", "0");
     DeviceToDiscover("second_day_energy_import_wh", "Wh", "energy", "0");
     DeviceToDiscover("second_day_energy_export_wh", "Wh", "energy", "0");
+    DevicePastDayWhToDiscover("second_yesterday_energy_import_wh");
+    DevicePastDayWhToDiscover("second_yesterday_energy_export_wh");
     DeviceToDiscover("mains_frequency_hz", "Hz", "frequency", "2");
   }
   for (int s = 0; s < kBalansunTempMaxSensors; s++) {
@@ -156,6 +166,8 @@ void sendMQTTDiscoveryMsg_global() {
   DeviceToDiscover("house_energy_export_wh", "Wh", "energy", "0");
   DeviceToDiscover("house_day_energy_import_wh", "Wh", "energy", "0");
   DeviceToDiscover("house_day_energy_export_wh", "Wh", "energy", "0");
+  DevicePastDayWhToDiscover("house_yesterday_energy_import_wh");
+  DevicePastDayWhToDiscover("house_yesterday_energy_export_wh");
 
   DeviceToDiscover("triac_open_percent", "%", "power_factor", "0");  // HA accepts power_factor for 0–100 % triac opening
   DeviceBinToDiscover("adc_clipping", "Analog ADC clipping");
@@ -194,8 +206,7 @@ void sendMQTTDiscoveryMsg_global() {
 
 }  // END OF sendMQTTDiscoveryMsg_global
 
-void DeviceToDiscover(String Name, String Unit, String Class, String Round) {
-
+void DeviceToDiscover(String Name, String Unit, String Class, String Round, bool whTotalIncreasing) {
   String StateTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "_state";
   BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool1;  // this is the Payload json format
@@ -217,8 +228,8 @@ void DeviceToDiscover(String Name, String Unit, String Class, String Round) {
     doc["state_class"] = "measurement";
   }
   if (Unit=="Wh"){
-      doc["state_class"] = "total_increasing";
-      doc["last_reset"] = mqttIsoNow();
+      doc["state_class"] = whTotalIncreasing ? "total_increasing" : "measurement";
+      if (whTotalIncreasing) doc["last_reset"] = mqttIsoNow();
   }
   doc["device_class"] = Class;
   doc["val_tpl"] = "{{ value_json." + Name + "|default(0)| round(" + Round + ") }}";

@@ -5,7 +5,7 @@
 void sendMQTTDiscoveryMsg_global(void);
 extern bool mqtt_ha_discovered;
 
-void DeviceToDiscover(String Name, String Unit, String Class, String Round);
+void DeviceToDiscover(String Name, String Unit, String Class, String Round, bool whTotalIncreasing = true);
 void DeviceBinToDiscover(String Name, String title);
 void DeviceAutomationTriggerToDiscover(const char *subtype, const char *title);
 void DeviceVacationSwitchToDiscover();

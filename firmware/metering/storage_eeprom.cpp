@@ -680,6 +680,35 @@ bool eepromHistoryReadDailyMetrics(
   return true;
 }
 
+bool balansun_yesterday_daily_metrics(long *houseImportWh,
+                                      long *houseExportWh,
+                                      long *secondImportWh,
+                                      long *secondExportWh) {
+  if (!houseImportWh || !houseExportWh || !secondImportWh || !secondExportWh) return false;
+  *houseImportWh = 0;
+  *houseExportWh = 0;
+  *secondImportWh = 0;
+  *secondExportWh = 0;
+  const int cap = history_days_capacity();
+  if (cap < 2) return true;
+  long ch1Import = 0;
+  long ch1Export = 0;
+  long ch2Import = 0;
+  long ch2Export = 0;
+  if (!eepromHistoryReadDailyMetrics(cap - 2, ch1Import, ch1Export, ch2Import, ch2Export)) {
+    return true;
+  }
+  if (ch1Import < 0) ch1Import = 0;
+  if (ch1Export < 0) ch1Export = 0;
+  if (ch2Import < 0) ch2Import = 0;
+  if (ch2Export < 0) ch2Export = 0;
+  *houseImportWh = ch1Import;
+  *houseExportWh = ch1Export;
+  *secondImportWh = ch2Import;
+  *secondExportWh = ch2Export;
+  return true;
+}
+
 bool eepromHistoryWriteDailyMetrics(
     int logicalDayIdx,
     long ch1ImportWh,
