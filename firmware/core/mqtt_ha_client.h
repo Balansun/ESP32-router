@@ -13,3 +13,6 @@ void callback(char *topic, byte *payload, unsigned int length);
 
 /** Publish consolidated state JSON to the HA state topic. */
 void SendDataToHomeAssistant(void);
+
+/** PubSubClient TX buffer (1536 B); disconnect+retry if realloc fails while connected. */
+bool mqtt_ensure_publish_buffer(void);

@@ -111,11 +111,20 @@ static void subscribeMQTTCommands() {
     clientMQTT.subscribe((String(MQTTPrefix) + "/" + MQTTdeviceName + "/action_" + String(i) + "/set").c_str());
   }
 }
+static constexpr uint16_t kMqttHaPublishBuf = 1536;
+
+bool mqtt_ensure_publish_buffer(void) {
+  if (mqtt_publish_period_sec == 0 && !pmqtt_ingest_mqtt_wanted()) return true;
+  if (clientMQTT.getBufferSize() >= kMqttHaPublishBuf) return true;
+  if (clientMQTT.setBufferSize(kMqttHaPublishBuf)) return true;
+  const bool was = clientMQTT.connected();
+  if (was) clientMQTT.disconnect();
+  yield();
+  return clientMQTT.setBufferSize(kMqttHaPublishBuf);
+}
+
 static bool mqttEnsureConnected() {
-  // ponytail: PubSubClient default is 256 B; resize even when already connected (e.g. after MQTT test).
-  if (mqtt_publish_period_sec > 0 || pmqtt_ingest_mqtt_wanted()) {
-    clientMQTT.setBufferSize(1536);
-  }
+  mqtt_ensure_publish_buffer();
   if (clientMQTT.connected()) return true;
   if (mqtt_publish_period_sec == 0 && !pmqtt_ingest_mqtt_wanted()) return false;
   const String host = ip32ToDotted(MQTTIP);
@@ -235,6 +244,7 @@ bool ApiMqttTestConnection(const String &host, uint16_t port, const String &user
   }
   const String restoreHost = ip32ToDotted(MQTTIP);
   clientMQTT.setServer(restoreHost.c_str(), MQTTPort);
+  mqtt_ensure_publish_buffer();
   if (wasConnected && mqtt_publish_period_sec > 0) {
     previousMqttMillis = millis() - (unsigned long)(mqtt_publish_period_sec * 1000UL) - 1UL;
   }
@@ -481,6 +491,7 @@ static void mqttPublishHaEventsFromState(bool surplus_active, bool source_stale,
 //****************************************
 
 void SendDataToHomeAssistant() {
+  if (!mqtt_ensure_publish_buffer()) return;
   String StateTopic = mqttStateTopic();
   BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(1536);
   JsonDocument &doc = _balansunJsonPool1;
@@ -488,8 +499,9 @@ void SendDataToHomeAssistant() {
   balansun_append_mqtt_ha_state_payload(doc.to<JsonObject>());
   const int health = balansun_compute_source_health_score();
   const int triac_open = TriacGetOpenPercent();
-  size_t n = serializeJson(doc, buffer);
-  bool published = clientMQTT.publish(StateTopic.c_str(), buffer, n);
+  size_t n = serializeJson(doc, buffer, sizeof(buffer));
+  if (n == 0 || n >= sizeof(buffer)) return;
+  clientMQTT.publish(StateTopic.c_str(), buffer, n);
   clientMQTT.publish(mqttAvailabilityTopic().c_str(), "online", true);
   mqttPublishHaEventsFromState(triac_open > 5, balansun_source_health_is_stale(health),
                                balansun_cap_mqtt_linky_tariff() ? LTARF.c_str() : "");

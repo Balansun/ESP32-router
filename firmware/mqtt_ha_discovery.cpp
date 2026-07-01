@@ -16,6 +16,7 @@
 #include <ArduinoJson.h>
 #include "balansun_json.h"
 #include "balansun_temperature.h"
+#include "core/mqtt_ha_client.h"
 
 bool mqtt_ha_discovered = false;
 
@@ -58,8 +59,14 @@ static String mqttDiscoveryTopic(const char *component, const String &objectId) 
 }
 
 static bool mqttPublishDiscovery(const char *topic, const void *payload, size_t len) {
+  if (!mqtt_ensure_publish_buffer()) return false;
   return clientMQTT.publish(
       topic, static_cast<const uint8_t *>(payload), static_cast<unsigned int>(len), true);
+}
+
+static bool mqttSerializeDiscoveryPublish(const String &topic, JsonDocument &doc, char *buffer, size_t cap) {
+  const size_t n = serializeJson(doc, buffer, cap);
+  return n > 0 && n < cap && mqttPublishDiscovery(topic.c_str(), buffer, n);
 }
 
 static String mqttIsoNow() {
@@ -105,8 +112,7 @@ static constexpr size_t kMqttHaDiscoveryBuf = 768;
 static constexpr size_t kMqttHaDiscoveryPool = 768;
 
 void sendMQTTDiscoveryMsg_global() {
-  // Enlarge MQTT WiFi buffer (see PubSubClient.h)
-  clientMQTT.setBufferSize(1536);
+  if (!mqtt_ensure_publish_buffer()) return;
   if (balansun_cap_mqtt_triac_channel_block()) {
     DeviceToDiscover("second_active_import_w", "W", "power", "0");
     DeviceToDiscover("second_active_export_w", "W", "power", "0");
@@ -221,7 +227,7 @@ void DeviceToDiscover(String Name, String Unit, String Class, String Round) {
   mqttDocAddAvty(doc);
 
   n = serializeJson(doc, buffer, sizeof(buffer));
-  published = n > 0 && n < sizeof(buffer) && mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  published = mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
   doc.clear();
   buffer[0] = '\0';
 }
@@ -250,15 +256,15 @@ void DeviceBinToDiscover(String Name, String title) {
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
   n = serializeJson(doc, buffer, sizeof(buffer));
-  published = n > 0 && n < sizeof(buffer) && mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  published = mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
   doc.clear();
   buffer[0] = '\0';
 }
 
 void DeviceAutomationTriggerToDiscover(const char *subtype, const char *title) {
-  BalansunJsonDoc _balansunJsonPool3 = balansun_json_doc_alloc(512);
+  BalansunJsonDoc _balansunJsonPool3 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool3;
-  char buffer[512];
+  char buffer[kMqttHaDiscoveryBuf];
   String objectId = String(MQTTdeviceName) + "_evt_" + String(subtype);
   String discoveryTopic = mqttDiscoveryTopic(DAUT, objectId);
   doc["automation_type"] = "trigger";
@@ -271,16 +277,15 @@ void DeviceAutomationTriggerToDiscover(const char *subtype, const char *title) {
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(discoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(discoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceVacationSwitchToDiscover() {
   String StateTopic = mqttStateTopic();
   String CommandTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "/vacation/set";
-  BalansunJsonDoc _balansunJsonPool4 = balansun_json_doc_alloc(700);
+  BalansunJsonDoc _balansunJsonPool4 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool4;
-  char buffer[700];
+  char buffer[kMqttHaDiscoveryBuf];
   String DiscoveryTopic = mqttDiscoveryTopic(SWTC, String(MQTTdeviceName) + "_vacation");
   doc["name"] = String(MQTTdeviceName) + " Vacation";
   doc["uniq_id"] = String(MQTTdeviceName) + "_vacation";
@@ -292,16 +297,15 @@ void DeviceVacationSwitchToDiscover() {
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceSwitchToDiscover(int index, String title) {
   String StateTopic = mqttStateTopic();
   String CommandTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "/action_" + String(index) + "/set";
-  BalansunJsonDoc _balansunJsonPool5 = balansun_json_doc_alloc(700);
+  BalansunJsonDoc _balansunJsonPool5 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool5;
-  char buffer[700];
+  char buffer[kMqttHaDiscoveryBuf];
   String name = "Action_" + String(index);
   String DiscoveryTopic = mqttDiscoveryTopic(SWTC, String(MQTTdeviceName) + "_" + name);
   doc["name"] = String(MQTTdeviceName) + " " + title;
@@ -319,15 +323,14 @@ void DeviceSwitchToDiscover(int index, String title) {
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   device["name"] = routerName;
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceSensorNumberToDiscover(const String &Name, const String &title, int minValue, int maxValue) {
   String StateTopic = mqttStateTopic();
-  BalansunJsonDoc _balansunJsonPool6 = balansun_json_doc_alloc(512);
+  BalansunJsonDoc _balansunJsonPool6 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool6;
-  char buffer[512];
+  char buffer[kMqttHaDiscoveryBuf];
   String DiscoveryTopic = mqttDiscoveryTopic(SSR, String(MQTTdeviceName) + "_" + Name);
   doc["name"] = String(MQTTdeviceName) + " " + title;
   doc["uniq_id"] = String(MQTTdeviceName) + "_" + Name;
@@ -338,17 +341,16 @@ void DeviceSensorNumberToDiscover(const String &Name, const String &title, int m
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceConfigNumberToDiscover(const String &Name, const String &title, const String &cmdSuffix, int minValue,
                                          int maxValue) {
   String StateTopic = mqttStateTopic();
   String CommandTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "/" + cmdSuffix;
-  BalansunJsonDoc _balansunJsonPool7 = balansun_json_doc_alloc(700);
+  BalansunJsonDoc _balansunJsonPool7 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool7;
-  char buffer[700];
+  char buffer[kMqttHaDiscoveryBuf];
   String DiscoveryTopic = mqttDiscoveryTopic(NB, String(MQTTdeviceName) + "_" + Name);
   doc["name"] = String(MQTTdeviceName) + " " + title;
   doc["uniq_id"] = String(MQTTdeviceName) + "_" + Name;
@@ -361,16 +363,15 @@ void DeviceConfigNumberToDiscover(const String &Name, const String &title, const
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceNumberToDiscover(String Name, String title, int minValue, int maxValue) {
   String StateTopic = mqttStateTopic();
   String CommandTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "/triac/set";
-  BalansunJsonDoc _balansunJsonPool8 = balansun_json_doc_alloc(700);
+  BalansunJsonDoc _balansunJsonPool8 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool8;
-  char buffer[700];
+  char buffer[kMqttHaDiscoveryBuf];
   String DiscoveryTopic = mqttDiscoveryTopic(NB, String(MQTTdeviceName) + "_" + Name);
   doc["name"] = String(MQTTdeviceName) + " " + title;
   doc["uniq_id"] = String(MQTTdeviceName) + "_" + Name;
@@ -385,16 +386,15 @@ void DeviceNumberToDiscover(String Name, String title, int minValue, int maxValu
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   device["name"] = routerName;
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceSelectSourceToDiscover() {
   String StateTopic = mqttStateTopic();
   String CommandTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "/source/set";
-  BalansunJsonDoc _balansunJsonPool9 = balansun_json_doc_alloc(700);
+  BalansunJsonDoc _balansunJsonPool9 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool9;
-  char buffer[700];
+  char buffer[kMqttHaDiscoveryBuf];
   String DiscoveryTopic = mqttDiscoveryTopic(SLCT, String(MQTTdeviceName) + "_Source");
   doc["name"] = String(MQTTdeviceName) + " Source";
   doc["uniq_id"] = String(MQTTdeviceName) + "_Source";
@@ -409,8 +409,7 @@ void DeviceSelectSourceToDiscover() {
   JsonObject device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   device["name"] = routerName;
-  size_t n = serializeJson(doc, buffer);
-  mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
 }
 
 void DeviceTextToDiscover(String Name, String title) {
@@ -431,8 +430,7 @@ void DeviceTextToDiscover(String Name, String title) {
   device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  n = serializeJson(doc, buffer);
-  published = mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  mqttSerializeDiscoveryPublish(DiscoveryTopic, doc, buffer, sizeof(buffer));
   doc.clear();
   buffer[0] = '\0';
 }
