@@ -100,9 +100,13 @@ static String mqttHaMetricFriendlyName(const String &key) {
   if (key == "temperature_c") return String("Temperature");
   return String(MQTTdeviceName) + " " + key;
 }
+// ponytail: HA merges device by ids; full metadata on every sensor blew the 512 B serialize cap.
+static constexpr size_t kMqttHaDiscoveryBuf = 768;
+static constexpr size_t kMqttHaDiscoveryPool = 768;
+
 void sendMQTTDiscoveryMsg_global() {
   // Enlarge MQTT WiFi buffer (see PubSubClient.h)
-  clientMQTT.setBufferSize(700);  // voir -->#define MQTT_MAX_PACKET_SIZE 256 is the default value in PubSubClient.h
+  clientMQTT.setBufferSize(1536);
   if (balansun_cap_mqtt_triac_channel_block()) {
     DeviceToDiscover("second_active_import_w", "W", "power", "0");
     DeviceToDiscover("second_active_export_w", "W", "power", "0");
@@ -187,11 +191,11 @@ void sendMQTTDiscoveryMsg_global() {
 void DeviceToDiscover(String Name, String Unit, String Class, String Round) {
 
   String StateTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "_state";
-  BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(512);
+  BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool1;  // this is the Payload json format
   JsonObject device;             // for device object  "device": {}
   JsonArray option;              // options (array) of this device
-  char buffer[512];
+  char buffer[kMqttHaDiscoveryBuf];
   size_t n;
   bool published;
 
@@ -213,22 +217,22 @@ void DeviceToDiscover(String Name, String Unit, String Class, String Round) {
   doc["device_class"] = Class;
   doc["val_tpl"] = "{{ value_json." + Name + "|default(0)| round(" + Round + ") }}";
   device = doc["device"].to<JsonObject>();
-  mqttDocFillHaDevice(device, true);
+  mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
 
-  n = serializeJson(doc, buffer);
-  published = mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  n = serializeJson(doc, buffer, sizeof(buffer));
+  published = n > 0 && n < sizeof(buffer) && mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
   doc.clear();
   buffer[0] = '\0';
 }
 void DeviceBinToDiscover(String Name, String title) {
 
   String StateTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "_state";
-  BalansunJsonDoc _balansunJsonPool2 = balansun_json_doc_alloc(512);
+  BalansunJsonDoc _balansunJsonPool2 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool2;  // this is the Payload json format
   JsonObject device;             // for device object  "device": {}
   JsonArray option;              // options (array) of this device
-  char buffer[512];
+  char buffer[kMqttHaDiscoveryBuf];
   size_t n;
   bool published;
 
@@ -245,8 +249,8 @@ void DeviceBinToDiscover(String Name, String title) {
   device = doc["device"].to<JsonObject>();
   mqttDocFillHaDevice(device, false);
   mqttDocAddAvty(doc);
-  n = serializeJson(doc, buffer);
-  published = mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
+  n = serializeJson(doc, buffer, sizeof(buffer));
+  published = n > 0 && n < sizeof(buffer) && mqttPublishDiscovery(DiscoveryTopic.c_str(), buffer, n);
   doc.clear();
   buffer[0] = '\0';
 }
@@ -411,11 +415,11 @@ void DeviceSelectSourceToDiscover() {
 
 void DeviceTextToDiscover(String Name, String title) {
   String StateTopic = String(MQTTPrefix) + "/" + MQTTdeviceName + "_state";
-  BalansunJsonDoc _balansunJsonPool10 = balansun_json_doc_alloc(512);
+  BalansunJsonDoc _balansunJsonPool10 = balansun_json_doc_alloc(kMqttHaDiscoveryPool);
   JsonDocument &doc = _balansunJsonPool10;  // this is the Payload json format
   JsonObject device;             // for device object  "device": {}
   JsonArray option;              // options (array) of this device
-  char buffer[512];
+  char buffer[kMqttHaDiscoveryBuf];
   size_t n;
   bool published;
   String DiscoveryTopic;              // HA discovery config topic for this entity

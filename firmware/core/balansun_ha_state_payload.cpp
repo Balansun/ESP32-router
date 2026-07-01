@@ -50,6 +50,8 @@ void balansun_append_ha_state_payload(JsonObject doc) {
     doc["second_energy_export_wh"] = second_energy_export_wh;
     doc["second_day_energy_import_wh"] = second_day_energy_import_wh;
     doc["second_day_energy_export_wh"] = second_day_energy_export_wh;
+    doc["second_apparent_import_va"] = second_apparent_import_va;
+    doc["second_apparent_export_va"] = second_apparent_export_va;
     doc["mains_frequency_hz"] = mains_frequency_hz;
   }
   balansun_temperature_set_primary_c_json(doc);
@@ -79,6 +81,8 @@ void balansun_append_ha_state_payload(JsonObject doc) {
   doc["house_energy_export_wh"] = house_energy_export_wh;
   doc["house_day_energy_import_wh"] = house_day_energy_import_wh;
   doc["house_day_energy_export_wh"] = house_day_energy_export_wh;
+  doc["house_apparent_import_va"] = house_apparent_import_va;
+  doc["house_apparent_export_va"] = house_apparent_export_va;
 
   doc["triac_open_percent"] = TriacGetOpenPercent();
   doc["adc_clipping"] = balansun_diag_uxi_adc_clipping_active() ? "ON" : "OFF";
@@ -99,6 +103,14 @@ void balansun_append_ha_state_payload(JsonObject doc) {
   for (int i = 0; i < NbActions; i++) {
     snprintf(action_key, sizeof(action_key), "action_%d", i);
     doc[action_key] = load_channels[i].On ? "ON" : "OFF";
+  }
+}
+
+void balansun_append_mqtt_ha_state_payload(JsonObject doc) {
+  balansun_append_ha_state_payload(doc);
+  // ponytail: REST omits invalid aggregate temperature_c; MQTT keeps the pre-d186256 key when > -100.
+  if (!doc["temperature_c"].is<float>() && temperature > -100.0f) {
+    doc["temperature_c"] = temperature;
   }
 }
 

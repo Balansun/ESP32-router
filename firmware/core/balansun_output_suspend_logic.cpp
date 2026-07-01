@@ -20,8 +20,7 @@ BalansunOutputSuspendResult balansun_output_suspend_eval(const BalansunOutputSus
     out.reason = BalansunOutputSuspendReason::SourceStale;
     return out;
   }
-  if (in.self_test_blocks_outputs ||
-      (in.commissioning_blocks_outputs && in.self_test_running)) {
+  if (in.commissioning_blocks_outputs && in.self_test_running) {
     out.active = true;
     out.reason = BalansunOutputSuspendReason::Commissioning;
     return out;

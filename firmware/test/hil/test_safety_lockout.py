@@ -1,4 +1,4 @@
-"""HIL: commissioning self-test safety lockout blocks routing mutators."""
+"""HIL: commissioning self-test critical warnings (no safety lockout / output suspend)."""
 
 from __future__ import annotations
 
@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from hil_helpers import (
-    assert_safety_lockout_error,
     device_surplus_regulation,
     get_with_retry,
     read_state,
@@ -29,7 +28,7 @@ def _require_router_surplus(hil_session, hil_base_url) -> None:
         pytest.skip("device profile has no surplus routing (meter gateway)")
 
 
-def test_health_safety_lockout_contract(hil_session, hil_base_url):
+def test_health_self_test_warning_contract(hil_session, hil_base_url):
     r = get_with_retry(hil_session, f"{hil_base_url}/api/v1/health", timeout=20)
     r.raise_for_status()
     body = r.json()
@@ -43,9 +42,9 @@ def test_health_safety_lockout_contract(hil_session, hil_base_url):
     lockout = body.get("safety_lockout") or {}
     assert isinstance(lockout.get("active"), bool), lockout
     assert isinstance(lockout.get("reasons"), list), lockout
+    assert lockout.get("active") is not True
 
     if not device_surplus_regulation(hil_session, hil_base_url):
-        assert lockout.get("active") is not True
         return
 
     st_spec = json.loads(
@@ -56,7 +55,7 @@ def test_health_safety_lockout_contract(hil_session, hil_base_url):
         assert key in nested, f"missing health.self_test.{key}"
 
 
-def test_safety_lockout_blocks_routing_mutators(hil_session, hil_base_url):
+def test_self_test_failure_is_critical_warning_not_lockout(hil_session, hil_base_url):
     _require_router_surplus(hil_session, hil_base_url)
     require_simulate_api(hil_session, hil_base_url)
     restore_passing_self_test(hil_session, hil_base_url)
@@ -72,17 +71,17 @@ def test_safety_lockout_blocks_routing_mutators(hil_session, hil_base_url):
 
     health = get_with_retry(hil_session, f"{hil_base_url}/api/v1/health", timeout=20).json()
     lockout = health.get("safety_lockout") or {}
-    assert lockout.get("active") is True, health
+    assert lockout.get("active") is not True, health
     assert "zc_failed" in (lockout.get("reasons") or []), lockout
 
     nested = health.get("self_test") or {}
-    assert nested.get("safety_lockout_active") is True
+    assert nested.get("safety_lockout_active") is not True
+    assert nested.get("critical_warning_active") is True
     assert nested.get("severity", {}).get("zc") == "critical"
 
     st = read_state(hil_session, hil_base_url)
     suspend = (st.get("status") or {}).get("output_suspend") or {}
-    assert suspend.get("active") is True
-    assert suspend.get("reason") == "safety_lockout"
+    assert suspend.get("reason") != "safety_lockout"
 
     triac = request_with_retry(
         hil_session,
@@ -91,23 +90,14 @@ def test_safety_lockout_blocks_routing_mutators(hil_session, hil_base_url):
         json={"command": "50"},
         timeout=20,
     )
-    assert_safety_lockout_error(triac)
-
-    pwm = request_with_retry(
-        hil_session,
-        "PATCH",
-        f"{hil_base_url}/api/v1/config",
-        json={"pwm_mode": "independent"},
-        timeout=20,
-    )
-    assert_safety_lockout_error(pwm)
+    assert triac.status_code != 403, triac.text[:300]
 
     restore_passing_self_test(hil_session, hil_base_url)
     health2 = get_with_retry(hil_session, f"{hil_base_url}/api/v1/health", timeout=20).json()
-    assert health2.get("safety_lockout", {}).get("active") is not True
+    assert health2.get("self_test", {}).get("critical_warning_active") is not True
 
 
-def test_action_override_blocked_under_lockout(hil_session, hil_base_url):
+def test_action_override_allowed_under_critical_warning(hil_session, hil_base_url):
     _require_router_surplus(hil_session, hil_base_url)
     require_simulate_api(hil_session, hil_base_url)
     simulate_self_test(
@@ -125,12 +115,12 @@ def test_action_override_blocked_under_lockout(hil_session, hil_base_url):
         json={"state": "on"},
         timeout=20,
     )
-    assert_safety_lockout_error(r)
+    assert r.status_code != 403, r.text[:300]
 
     restore_passing_self_test(hil_session, hil_base_url)
 
 
-def test_self_test_run_allowed_under_lockout(hil_session, hil_base_url):
+def test_self_test_run_allowed_under_critical_warning(hil_session, hil_base_url):
     _require_router_surplus(hil_session, hil_base_url)
     require_simulate_api(hil_session, hil_base_url)
     simulate_self_test(
@@ -153,7 +143,7 @@ def test_self_test_run_allowed_under_lockout(hil_session, hil_base_url):
     restore_passing_self_test(hil_session, hil_base_url)
 
 
-def test_inject_blocked_under_lockout(hil_session, hil_base_url):
+def test_inject_allowed_under_critical_warning(hil_session, hil_base_url):
     _require_router_surplus(hil_session, hil_base_url)
     require_simulate_api(hil_session, hil_base_url)
     simulate_self_test(
@@ -165,7 +155,7 @@ def test_inject_blocked_under_lockout(hil_session, hil_base_url):
     ).raise_for_status()
 
     health = get_with_retry(hil_session, f"{hil_base_url}/api/v1/health", timeout=20).json()
-    assert (health.get("safety_lockout") or {}).get("active") is True, health
+    assert (health.get("safety_lockout") or {}).get("active") is not True, health
 
     r = request_with_retry(
         hil_session,
@@ -176,6 +166,6 @@ def test_inject_blocked_under_lockout(hil_session, hil_base_url):
     )
     if r.status_code == 404:
         pytest.skip("inject route not available")
-    assert_safety_lockout_error(r)
+    assert r.status_code != 403, r.text[:300]
 
     restore_passing_self_test(hil_session, hil_base_url)

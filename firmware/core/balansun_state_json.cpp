@@ -50,8 +50,11 @@ void balansun_append_output_suspend_json(JsonObject parent) {
 void balansun_append_safety_lockout_json(JsonObject parent) {
   const BalansunSelfTestSafetyResult safety = balansun_self_test_safety_eval_now();
   JsonObject o = parent["safety_lockout"].to<JsonObject>();
-  o["active"] = safety.lockout_active;
+  o["active"] = false;
   JsonArray reasons = o["reasons"].to<JsonArray>();
+  if (!balansun_self_test_safety_has_critical_failure(safety)) {
+    return;
+  }
   const char *reason_wires[3];
   size_t reason_count = 0;
   balansun_self_test_safety_lockout_reasons(safety, reason_wires, 3, &reason_count);

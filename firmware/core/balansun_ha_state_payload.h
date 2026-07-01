@@ -18,5 +18,8 @@ void balansun_append_measurements_diagnostics(JsonObject diag);
 /** Append keys identical to MQTT `{prefix}/{device}_state` JSON (capability-gated). */
 void balansun_append_ha_state_payload(JsonObject doc);
 
+/** MQTT HA state: same as REST snapshot plus legacy temperature_c when probe reads > -100. */
+void balansun_append_mqtt_ha_state_payload(JsonObject doc);
+
 /** Apply triac command string (AUTO or 0–100); same as MQTT triac/set. */
 bool balansun_apply_triac_command(const char *msg, String &err);

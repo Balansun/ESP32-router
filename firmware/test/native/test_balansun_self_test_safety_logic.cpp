@@ -40,25 +40,25 @@ TEST(BalansunSelfTestSafety, SkippedOrNeverRunNoLockout) {
   EXPECT_FALSE(r.lockout_active);
 }
 
-TEST(BalansunSelfTestSafety, ZcFailLockout) {
+TEST(BalansunSelfTestSafety, ZcFailCriticalWarningOnly) {
   SelfTestPersisted st{};
   st.run_epoch = 1;
   st.zc_ok = false;
   st.triac_ok = true;
   st.source_ok = true;
   const auto r = balansun_self_test_safety_eval(router_input(st, false));
-  EXPECT_TRUE(r.lockout_active);
+  EXPECT_FALSE(r.lockout_active);
   EXPECT_TRUE(r.zc_critical);
   EXPECT_FALSE(r.triac_critical);
 }
 
-TEST(BalansunSelfTestSafety, TriacFailLockout) {
+TEST(BalansunSelfTestSafety, TriacFailCriticalWarningOnly) {
   SelfTestPersisted st{};
   st.run_epoch = 1;
   st.zc_ok = true;
   st.triac_ok = false;
   const auto r = balansun_self_test_safety_eval(router_input(st, false));
-  EXPECT_TRUE(r.lockout_active);
+  EXPECT_FALSE(r.lockout_active);
   EXPECT_TRUE(r.triac_critical);
 }
 
@@ -74,7 +74,7 @@ TEST(BalansunSelfTestSafety, SourceFailOnlyWhenStaleGuard) {
   EXPECT_FALSE(r.source_critical);
 
   r = balansun_self_test_safety_eval(router_input(st, true));
-  EXPECT_TRUE(r.lockout_active);
+  EXPECT_FALSE(r.lockout_active);
   EXPECT_TRUE(r.source_critical);
 }
 

@@ -53,6 +53,21 @@ HIL_SUITE = {
 
 FULL_ENVS = ("wroom32", "esp32s3", "hil")
 
+# JSY-MK-194T full-router images per board class (CI release + field flash).
+JSY_MK194_BOARD_ENVS: tuple[tuple[str, str, tuple[str, str]], ...] = (
+    ("jsy_mk194_full_router", "wroom32", ("ESP32-WROOM32 + JSY-MK-194", "ESP32-WROOM32 + JSY-MK-194")),
+    (
+        "wrover32_jsy_mk194_full_router",
+        "wrover32",
+        ("ESP32-WROVER32 + JSY-MK-194", "ESP32-WROVER32 + JSY-MK-194"),
+    ),
+    (
+        "esp32s3_jsy_mk194_full_router",
+        "esp32s3",
+        ("ESP32-S3 + JSY-MK-194", "ESP32-S3 + JSY-MK-194"),
+    ),
+)
+
 PACK_LABELS: dict[str, tuple[str, str]] = {
     "jsy_mk194": ("JSY-MK-194", "JSY-MK-194"),
     "jsy_mk333": ("JSY-MK-333", "JSY-MK-333"),
@@ -163,6 +178,18 @@ def build_firmware_catalog(manifest: dict, variants: list[dict]) -> dict:
             }
         )
 
+    for pio_env, _board, (label_fr, label_en) in JSY_MK194_BOARD_ENVS:
+        entries.append(
+            {
+                "family": "full",
+                "declination_id": "jsy_mk194",
+                "label_fr": label_fr,
+                "label_en": label_en,
+                "pio_env": pio_env,
+                "product_profile": "full_router",
+            }
+        )
+
     return {"version": 1, "families": families, "entries": entries}
 
 
@@ -230,6 +257,29 @@ def build_matrix(manifest: dict) -> dict:
             }
         )
 
+    jsy_wire = jsy["wire"]
+    jsy_mk194_board_envs: list[str] = []
+    for pio_env, board_profile, _labels in JSY_MK194_BOARD_ENVS:
+        jsy_mk194_board_envs.append(pio_env)
+        variants.append(
+            {
+                "pio_env": pio_env,
+                "pack_id": "jsy_mk194",
+                "role": "full_router",
+                "product_profile": "full_router",
+                "meters": [jsy_wire],
+                "board_profile": board_profile,
+                "caps": dict(ROLE_CAPS["full_router"]),
+                "hil_suite": HIL_SUITE["full_router"],
+                "ui": {
+                    "single_meter": True,
+                    "show_measurement_source": False,
+                    "show_advanced_meter_sources": False,
+                    "show_follow_triac_pwm_option": True,
+                },
+            }
+        )
+
     meter_pack_envs = sorted(
         {
             v["pio_env"]
@@ -239,7 +289,7 @@ def build_matrix(manifest: dict) -> dict:
         }
     )
     full_envs = list(FULL_ENVS)
-    all_variant_envs = sorted(set(meter_pack_envs + full_envs))
+    all_variant_envs = sorted(set(meter_pack_envs + full_envs + jsy_mk194_board_envs))
 
     router_envs = sorted(v["pio_env"] for v in variants if v["role"] == "meter_router")
     router_envs.append("hil")
@@ -250,6 +300,7 @@ def build_matrix(manifest: dict) -> dict:
         "router_envs": router_envs,
         "meter_pack_envs": meter_pack_envs,
         "full_envs": full_envs,
+        "jsy_mk194_board_envs": jsy_mk194_board_envs,
         "all_variant_envs": all_variant_envs,
         "firmware_catalog": build_firmware_catalog(manifest, variants),
     }

@@ -35,5 +35,8 @@ static const ProfileMatrixCase kProfileMatrixCases[] = {
   {"full_router", "full_router", true, true, true, true},
   {"full_router", "full_router", true, true, true, true},
   {"full_router", "full_router", true, true, true, true},
+  {"full_router", "full_router", true, true, true, true},
+  {"full_router", "full_router", true, true, true, true},
+  {"full_router", "full_router", true, true, true, true},
 };
-static const size_t kProfileMatrixCaseCount = 27;
+static const size_t kProfileMatrixCaseCount = 30;

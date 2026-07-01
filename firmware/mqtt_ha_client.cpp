@@ -124,8 +124,8 @@ static bool mqttEnsureConnected() {
   MqttClient.setTimeout(kMqttRoutineSocketTimeoutMs);
   clientMQTT.setServer(host.c_str(), MQTTPort);
   clientMQTT.setCallback(callback);
-  /* Large Pmqtt JSON payloads exceed the PubSubClient 256 B default. */
-  if (pmqtt_ingest_mqtt_wanted()) {
+  // ponytail: HA state JSON (~1 KB) and discovery configs need >256 B PubSubClient default.
+  if (mqtt_publish_period_sec > 0 || pmqtt_ingest_mqtt_wanted()) {
     clientMQTT.setBufferSize(1536);
   }
   const String willTopic = mqttAvailabilityTopic();
@@ -485,7 +485,7 @@ void SendDataToHomeAssistant() {
   BalansunJsonDoc _balansunJsonPool1 = balansun_json_doc_alloc(1536);
   JsonDocument &doc = _balansunJsonPool1;
   char buffer[1536];
-  balansun_append_ha_state_payload(doc.to<JsonObject>());
+  balansun_append_mqtt_ha_state_payload(doc.to<JsonObject>());
   const int health = balansun_compute_source_health_score();
   const int triac_open = TriacGetOpenPercent();
   size_t n = serializeJson(doc, buffer);

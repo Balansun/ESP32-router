@@ -9,6 +9,7 @@
     "results",
     "severity",
     "safety_lockout_active",
+    "critical_warning_active",
     "safety_lockout_reasons"
   ]
 }

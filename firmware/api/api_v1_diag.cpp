@@ -6,7 +6,6 @@
 #include "balansun_config_audit.h"
 #include "balansun_hw_presence.h"
 #include "balansun_json.h"
-#include "balansun_regulation_safety.h"
 #include "balansun_self_test.h"
 #include "balansun_self_test_safety_runtime.h"
 #include "balansun_status_led.h"
@@ -47,9 +46,6 @@ void handle_post_health_self_test_simulate() {
   g_self_test.pending = false;
   g_self_test.run_epoch = balansun_self_test_stamp_run_epoch();
   balansun_self_test_disarm_boot_pending();
-  if (balansun_self_test_safety_eval_now().lockout_active) {
-    balansun_regulation_force_outputs_off();
-  }
   persistConfigToEeprom();
   api_send_json(server, 200, "{\"ok\":true}");
 }

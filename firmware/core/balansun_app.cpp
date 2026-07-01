@@ -275,7 +275,6 @@ void balansun_loop(void) {
       tabPw_Triac_2s[IdxStock2s] = second_active_import_w - second_active_export_w;
       tabPvaHouse_2s[IdxStock2s] = house_apparent_import_va - house_apparent_export_va;
       tabPva_Triac_2s[IdxStock2s] = second_apparent_import_va - second_apparent_export_va;
-      publishMqttLoop();
       balansun_on_clock_tick();
       balansun_daily_energy_tick();
     }
@@ -283,6 +282,7 @@ void balansun_loop(void) {
     if (meter_reading_valid || temperature > -100) {
       IdxStock2s = (IdxStock2s + 1) % kBalansunPwrHist2sSlots;
     }
+    publishMqttLoop();
   }
 
 #ifndef METER_ONLY_BUILD

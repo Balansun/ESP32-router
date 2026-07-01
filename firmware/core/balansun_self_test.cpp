@@ -3,7 +3,6 @@
 #include "balansun_api_ready.h"
 #include "balansun_globals.h"
 #include "balansun_product_caps.h"
-#include "balansun_regulation_safety.h"
 #include "balansun_self_test_safety_logic.h"
 #include "balansun_self_test_safety_runtime.h"
 #include "balansun_triac_sync_logic.h"
@@ -87,19 +86,7 @@ void balansun_self_test_start_run() {
   g_zc_total = 0;
 }
 
-bool balansun_self_test_blocks_outputs() {
-  const BalansunProductCaps caps = balansun_product_caps_compile_time();
-  if (!balansun_product_caps_has(caps, BalansunCap::SurplusRegulation)) {
-    return false;
-  }
-  if (!balansun_product_caps_has(caps, BalansunCap::SelfTestTriac)) {
-    return false;
-  }
-  if (g_self_test.skipped) {
-    return false;
-  }
-  return balansun_self_test_is_running() || g_self_test.run_epoch == 0;
-}
+bool balansun_self_test_blocks_outputs() { return false; }
 
 uint32_t balansun_self_test_stamp_run_epoch() {
   if (time_sync_valid) {
@@ -150,9 +137,6 @@ void balansun_self_test_tick(unsigned long now_ms) {
     g_self_test.source_ok = (last_metering_task_ms > 0) && (time_sync_valid || meter_reading_valid);
     g_self_test.run_epoch = balansun_self_test_stamp_run_epoch();
     g_phase = Phase::Done;
-    if (balansun_self_test_safety_eval_now().lockout_active) {
-      balansun_regulation_force_outputs_off();
-    }
     persistConfigToEeprom();
     return;
   }
@@ -185,7 +169,11 @@ void balansun_self_test_append_health_json(JsonObject obj) {
   severity["triac"] = balansun_self_test_severity_wire(g_self_test.triac_ok, true);
   severity["source"] =
       balansun_self_test_severity_wire(g_self_test.source_ok, stale_guard);
-  obj["safety_lockout_active"] = safety.lockout_active;
+  obj["safety_lockout_active"] = false;
+  const bool critical_warning =
+      g_self_test.run_epoch != 0 && !g_self_test.skipped &&
+      balansun_self_test_safety_has_critical_failure(safety);
+  obj["critical_warning_active"] = critical_warning;
   JsonArray reasons = obj["safety_lockout_reasons"].to<JsonArray>();
   const char *reason_wires[3];
   size_t reason_count = 0;

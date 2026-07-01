@@ -651,6 +651,75 @@
         "show_advanced_meter_sources": true,
         "show_follow_triac_pwm_option": true
       }
+    },
+    {
+      "pio_env": "jsy_mk194_full_router",
+      "pack_id": "jsy_mk194",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "wroom32",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "wrover32_jsy_mk194_full_router",
+      "pack_id": "jsy_mk194",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "wrover32",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
+    },
+    {
+      "pio_env": "esp32s3_jsy_mk194_full_router",
+      "pack_id": "jsy_mk194",
+      "role": "full_router",
+      "product_profile": "full_router",
+      "meters": [
+        "JsyMk194"
+      ],
+      "board_profile": "esp32s3",
+      "caps": {
+        "surplus_regulation": true,
+        "triac": true,
+        "multi_action": true,
+        "source_test_inject": true
+      },
+      "hil_suite": "inject_regulation",
+      "ui": {
+        "single_meter": true,
+        "show_measurement_source": false,
+        "show_advanced_meter_sources": false,
+        "show_follow_triac_pwm_option": true
+      }
     }
   ],
   "router_envs": [
@@ -699,6 +768,11 @@
     "esp32s3",
     "hil"
   ],
+  "jsy_mk194_board_envs": [
+    "jsy_mk194_full_router",
+    "wrover32_jsy_mk194_full_router",
+    "esp32s3_jsy_mk194_full_router"
+  ],
   "all_variant_envs": [
     "analog_meter",
     "analog_router",
@@ -709,9 +783,11 @@
     "esp32_32u_jsy_meter",
     "esp32_32u_jsy_router",
     "esp32s3",
+    "esp32s3_jsy_mk194_full_router",
     "hil",
     "homew_meter",
     "homew_router",
+    "jsy_mk194_full_router",
     "jsy_mk194_meter",
     "jsy_mk194_router",
     "jsy_mk333_meter",
@@ -726,7 +802,8 @@
     "shelly_pro_router",
     "smartg_meter",
     "smartg_router",
-    "wroom32"
+    "wroom32",
+    "wrover32_jsy_mk194_full_router"
   ],
   "firmware_catalog": {
     "version": 1,
@@ -946,6 +1023,30 @@
         "label_fr": "Labo HIL (tous compteurs)",
         "label_en": "HIL lab (all meters)",
         "pio_env": "hil",
+        "product_profile": "full_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "jsy_mk194",
+        "label_fr": "ESP32-WROOM32 + JSY-MK-194",
+        "label_en": "ESP32-WROOM32 + JSY-MK-194",
+        "pio_env": "jsy_mk194_full_router",
+        "product_profile": "full_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "jsy_mk194",
+        "label_fr": "ESP32-WROVER32 + JSY-MK-194",
+        "label_en": "ESP32-WROVER32 + JSY-MK-194",
+        "pio_env": "wrover32_jsy_mk194_full_router",
+        "product_profile": "full_router"
+      },
+      {
+        "family": "full",
+        "declination_id": "jsy_mk194",
+        "label_fr": "ESP32-S3 + JSY-MK-194",
+        "label_en": "ESP32-S3 + JSY-MK-194",
+        "pio_env": "esp32s3_jsy_mk194_full_router",
         "product_profile": "full_router"
       }
     ]

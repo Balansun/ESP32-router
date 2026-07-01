@@ -30,6 +30,7 @@
       "source": "warning"
     },
     "safety_lockout_active": false,
+    "critical_warning_active": false,
     "safety_lockout_reasons": []
   }
 }

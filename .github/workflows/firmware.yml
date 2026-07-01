@@ -167,6 +167,13 @@ jobs:
           ENVS=$(python3 -c "import json; m=json.load(open('firmware/test/golden/profile_test_matrix.json')); print(' '.join('-e '+e for e in m['all_variant_envs']))")
           # shellcheck disable=SC2086
           pio run $ENVS
+      - name: Verify JSY-MK-194 board firmware artifacts
+        run: |
+          set -eu
+          for env in $(python3 -c "import json; print(' '.join(json.load(open('firmware/test/golden/profile_test_matrix.json'))['jsy_mk194_board_envs']))"); do
+            test -f ".pio/build/${env}/firmware.bin"
+            echo "OK: ${env}/firmware.bin"
+          done
       - name: Verify embedded firmware version (nightly)
         if: env.BALANSUN_FIRMWARE_VERSION != ''
         run: |
@@ -206,6 +213,12 @@ jobs:
             echo "## esp32s3 (alternate full)"
             pio run -e esp32s3 --target size
             echo ""
+            echo "## JSY-MK-194 full router (per board)"
+            for env in $(python3 -c "import json; print(' '.join(json.load(open('firmware/test/golden/profile_test_matrix.json'))['jsy_mk194_board_envs']))"); do
+              echo "### ${env}"
+              pio run -e "$env" --target size
+              echo ""
+            done
           } | tee release/size-report.txt
       - name: Package nightly release artifacts
         if: needs.prerelease-tag-early.outputs.tag_name != ''

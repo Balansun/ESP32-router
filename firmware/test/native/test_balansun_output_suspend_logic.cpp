@@ -58,13 +58,12 @@ TEST(BalansunOutputSuspend, CommissioningBlocksDuringSelfTest) {
   EXPECT_STREQ(balansun_output_suspend_reason_wire(BalansunOutputSuspendReason::Vacation), "vacation");
 }
 
-TEST(BalansunOutputSuspend, BootSelfTestGateWithoutConfigFlag) {
+TEST(BalansunOutputSuspend, BootSelfTestDoesNotSuspend) {
   BalansunOutputSuspendInput in{};
   in.caps = balansun_product_caps_for_profile(BALANSUN_PRODUCT_FULL_ROUTER);
   in.self_test_blocks_outputs = true;
   const auto r = balansun_output_suspend_eval(in);
-  EXPECT_TRUE(r.active);
-  EXPECT_EQ(r.reason, BalansunOutputSuspendReason::Commissioning);
+  EXPECT_FALSE(r.active);
 }
 
 TEST(BalansunOutputSuspend, InactiveWhenNoTriggers) {

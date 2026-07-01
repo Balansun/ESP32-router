@@ -26,7 +26,7 @@ BalansunSelfTestSafetyResult balansun_self_test_safety_eval(const BalansunSelfTe
     out.zc_critical = !in.self_test->zc_ok;
     out.triac_critical = !in.self_test->triac_ok;
     out.source_critical = !in.self_test->source_ok && in.triac_off_when_source_stale;
-    out.lockout_active = out.zc_critical || out.triac_critical || out.source_critical;
+    // ponytail: report critical severity in health JSON; do not latch safety_lockout / output suspend.
   }
   return out;
 }
