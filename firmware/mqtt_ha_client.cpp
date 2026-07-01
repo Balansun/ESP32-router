@@ -112,6 +112,10 @@ static void subscribeMQTTCommands() {
   }
 }
 static bool mqttEnsureConnected() {
+  // ponytail: PubSubClient default is 256 B; resize even when already connected (e.g. after MQTT test).
+  if (mqtt_publish_period_sec > 0 || pmqtt_ingest_mqtt_wanted()) {
+    clientMQTT.setBufferSize(1536);
+  }
   if (clientMQTT.connected()) return true;
   if (mqtt_publish_period_sec == 0 && !pmqtt_ingest_mqtt_wanted()) return false;
   const String host = ip32ToDotted(MQTTIP);
@@ -124,10 +128,6 @@ static bool mqttEnsureConnected() {
   MqttClient.setTimeout(kMqttRoutineSocketTimeoutMs);
   clientMQTT.setServer(host.c_str(), MQTTPort);
   clientMQTT.setCallback(callback);
-  // ponytail: HA state JSON (~1 KB) and discovery configs need >256 B PubSubClient default.
-  if (mqtt_publish_period_sec > 0 || pmqtt_ingest_mqtt_wanted()) {
-    clientMQTT.setBufferSize(1536);
-  }
   const String willTopic = mqttAvailabilityTopic();
   mqtt_pump_http();
   if (!clientMQTT.connect(MQTTdeviceName.c_str(), MQTTUser.c_str(), MQTTPwd.c_str(), willTopic.c_str(), 0, true,
