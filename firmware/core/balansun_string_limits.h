@@ -32,6 +32,10 @@ constexpr unsigned BALANSUN_MQTT_TOPIC_MAX = 128;
 constexpr unsigned BALANSUN_MQTT_SCHEMA_MAX = 64;
 constexpr unsigned BALANSUN_MQTT_BINDINGS_JSON_MAX = 4096;
 
+// Victron Cerbo GX
+constexpr unsigned BALANSUN_VICTRON_PORTAL_ID_MAX = 17;
+constexpr unsigned BALANSUN_VICTRON_SURPLUS_MODE_MAX = 16;
+
 // Secrets / auth
 constexpr unsigned BALANSUN_HTTP_API_PASSWORD_MAX = 64;
 constexpr unsigned BALANSUN_ARDUINO_OTA_PASSWORD_MAX = 64;

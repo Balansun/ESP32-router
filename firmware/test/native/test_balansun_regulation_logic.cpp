@@ -125,7 +125,7 @@ TEST(BalansunRegulationLogic, InactiveActifClosesTriac) {
   EXPECT_FALSE(out.triac_on);
 }
 
-TEST(BalansunRegulationLogic, ItmodeNotOkForcesClosedOnPrimary) {
+TEST(BalansunRegulationLogic, ItmodeNotOkDoesNotForceClosedOnPrimary) {
   balansun_regulation_state_init();
   ActionRegulationInput in;
   in.action_index = 0;
@@ -140,7 +140,7 @@ TEST(BalansunRegulationLogic, ItmodeNotOkForcesClosedOnPrimary) {
     (void)SurplusRegulator::compute_action(in);
   }
   const auto out = SurplusRegulator::compute_action(in);
-  EXPECT_FLOAT_EQ(out.triac_delay_percent_f, 100.0f);
+  EXPECT_LT(out.triac_delay_percent_f, 100.0f);
 }
 
 TEST(BalansunRegulationLogic, IntegralCapsAtMaxOpenPercent) {
@@ -288,7 +288,7 @@ TEST(BalansunRegulationLogic, DecoupeSecondaryBothBranches) {
   EXPECT_FLOAT_EQ(out.triac_delay_percent_f, 0.0f);
 }
 
-TEST(BalansunRegulationLogic, ItmodeNotOkKeepsTriacOff) {
+TEST(BalansunRegulationLogic, ItmodeNotOkStillRegulates) {
   balansun_regulation_state_init();
   ActionRegulationInput in;
   in.action_index = 0;
@@ -299,7 +299,7 @@ TEST(BalansunRegulationLogic, ItmodeNotOkKeepsTriacOff) {
   in.ki = 40;
   in.max_open_percent = 80;
   const auto out = SurplusRegulator::compute_action(in);
-  EXPECT_FLOAT_EQ(out.triac_delay_percent_f, 100.0f);
+  EXPECT_LT(out.triac_delay_percent_f, 100.0f);
 }
 
 TEST(BalansunRegulationLogic, TriacOverrideOffForcesOpen) {

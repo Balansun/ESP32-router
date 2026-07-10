@@ -57,6 +57,8 @@ void balansun_append_ha_state_payload(JsonObject doc) {
     doc["second_energy_export_wh"] = second_energy_export_wh;
     doc["second_day_energy_import_wh"] = second_day_energy_import_wh;
     doc["second_day_energy_export_wh"] = second_day_energy_export_wh;
+    doc["second_routed_day_energy_wh"] =
+        balansun_routed_day_energy_wh(second_day_energy_import_wh, second_day_energy_export_wh);
     doc["second_yesterday_energy_import_wh"] = secondYesterdayImportWh;
     doc["second_yesterday_energy_export_wh"] = secondYesterdayExportWh;
     doc["second_apparent_import_va"] = second_apparent_import_va;

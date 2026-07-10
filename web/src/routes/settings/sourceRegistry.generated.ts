@@ -22,6 +22,7 @@ export type SourceWireId =
   | "SmartG"
   | "HomeW"
   | "Pmqtt"
+  | "VictronGx"
   | "BalansunPeer";
 
 export type ConfigField =
@@ -39,7 +40,12 @@ export type ConfigField =
   | "pmqtt_bindings"
   | "pmqtt_schema"
   | "pmqtt_topic"
-  | "tempo_rte_enabled";
+  | "tempo_rte_enabled"
+  | "victron_battery_device_id"
+  | "victron_broker_ip"
+  | "victron_grid_phases"
+  | "victron_portal_id"
+  | "victron_surplus_mode";
 
 export interface MeterSourceDefinition {
   id: SourceWireId;
@@ -127,6 +133,13 @@ export const GENERATED_SOURCE_REGISTRY: MeterSourceDefinition[] = [
     connectionKind: "mqtt",
     pinoutAnchor: "17-sources-de-mesure--schémas-électrique-et-électronique",
     fields: ["pmqtt_topic", "pmqtt_schema", "pmqtt_bindings"],
+  },
+  {
+    id: "VictronGx",
+    baseKind: "mqtt",
+    connectionKind: "mqtt",
+    pinoutAnchor: "17-sources-de-mesure--schémas-électrique-et-électronique",
+    fields: ["victron_broker_ip", "victron_portal_id", "victron_battery_device_id", "victron_surplus_mode", "victron_grid_phases"],
   },
   {
     id: "BalansunPeer",

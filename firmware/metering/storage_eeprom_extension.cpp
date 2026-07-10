@@ -396,6 +396,32 @@ int storage_eeprom_extension_read(int address, IEepromBackend &eeprom, EepromExt
       }
     }
   }
+  if (address + 2 <= cap) {
+    const uint16_t vxMag = eeprom.readUShort(address);
+    if (vxMag == kEepromVictronGxMagic) {
+      address += static_cast<int>(sizeof(uint16_t));
+      fields.victronGxPersistPresent = true;
+      if (address + 4 <= cap) {
+        fields.victronBrokerIp = eeprom.readULong(address);
+        address += static_cast<int>(sizeof(uint32_t));
+      }
+      if (address < cap) {
+        fields.victronPortalId = eeprom.readString(address);
+        if (fields.victronPortalId.length() > kEepromVictronPortalIdMax) {
+          fields.victronPortalId.resize(kEepromVictronPortalIdMax);
+        }
+        address += static_cast<int>(fields.victronPortalId.length() + 1);
+      }
+      if (address + 4 <= cap) {
+        fields.victronBatteryDeviceId = eeprom.readUShort(address);
+        address += static_cast<int>(sizeof(uint16_t));
+        fields.victronSurplusMode = eeprom.readByte(address);
+        address += 1;
+        fields.victronGridPhases = eeprom.readByte(address);
+        address += 1;
+      }
+    }
+  }
   address = eeprom_read_legacy_load_profile_block(address, eeprom, fields);
   // Block: kEepromHttpApiTokensMagic (tail append — do not insert earlier in chain)
   if (address + 2 <= cap) {
@@ -736,6 +762,38 @@ int storage_eeprom_extension_write(int address, IEepromBackend &eeprom, const Ee
     address += static_cast<int>(sizeof(uint32_t));
     eeprom.writeULong(address, static_cast<uint32_t>((addr >> 32) & 0xFFFFFFFFu));
     address += static_cast<int>(sizeof(uint32_t));
+  }
+  {
+    if (address + 2 > cap) {
+      trunc = true;
+      goto done;
+    }
+    eeprom.writeUShort(address, kEepromVictronGxMagic);
+    address += static_cast<int>(sizeof(uint16_t));
+    if (address + 4 > cap) {
+      trunc = true;
+      goto done;
+    }
+    eeprom.writeULong(address, fields.victronBrokerIp);
+    address += static_cast<int>(sizeof(uint32_t));
+    if (address >= cap) {
+      trunc = true;
+      goto done;
+    }
+    std::string pid = fields.victronPortalId;
+    if (pid.length() > kEepromVictronPortalIdMax) pid = pid.substr(0, kEepromVictronPortalIdMax);
+    eeprom.writeString(address, pid);
+    address += static_cast<int>(pid.length() + 1);
+    if (address + 4 > cap) {
+      trunc = true;
+      goto done;
+    }
+    eeprom.writeUShort(address, fields.victronBatteryDeviceId);
+    address += static_cast<int>(sizeof(uint16_t));
+    eeprom.writeByte(address, fields.victronSurplusMode);
+    address += 1;
+    eeprom.writeByte(address, fields.victronGridPhases < 1 ? 1 : fields.victronGridPhases);
+    address += 1;
   }
   // Block: kEepromHttpApiTokensMagic (tail append). Wrapped in a scope so its locals do
   // not stay live at `done:` (goto must not cross an in-scope initialization).

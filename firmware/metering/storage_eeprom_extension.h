@@ -139,6 +139,14 @@ struct EepromExtensionFields {
   bool legacyLoadProfileBlockPresent = false;
   std::string loadProfilePersist = "water_heater_triac";
 
+  /** Victron Cerbo GX (magic 0xE212, before legacy load profile). */
+  bool victronGxPersistPresent = false;
+  uint32_t victronBrokerIp = 0;
+  std::string victronPortalId;
+  uint16_t victronBatteryDeviceId = 0;
+  uint8_t victronSurplusMode = 0;
+  uint8_t victronGridPhases = 1;
+
   /** Persisted API access tokens (magic 0xE20D, tail append). */
   struct ApiAccessTokenStored {
     uint8_t id = 0;

@@ -17,6 +17,7 @@
 #include "balansun_temperature.h"
 #include "balansun_triac_sync_logic.h"
 #include "triac_api_shim.h"
+#include <esp_system.h>
 void handle_get_measurements() {
   API_AUTH_GUARD();
   API_TELEMETRY_READY_GUARD();
@@ -202,6 +203,7 @@ void handle_get_health() {
   doc["pin_map_reboot_pending"] = pinMapRebootPending;
   doc["device_lifecycle"] = balansun_device_lifecycle_wire(g_balansun_state_snapshot.lifecycle);
   doc["product_profile"] = balansun_product_caps_compile_time().profile_wire;
+  doc["esp_reset_reason"] = static_cast<int>(esp_reset_reason());
   balansun_append_output_suspend_json(doc.as<JsonObject>());
   balansun_append_safety_lockout_json(doc.as<JsonObject>());
   JsonObject st = doc["self_test"].to<JsonObject>();

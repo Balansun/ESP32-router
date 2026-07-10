@@ -29,6 +29,7 @@ WIRE_TO_SOURCE_ID = {
     "SmartG": "SmartG",
     "HomeW": "HomeW",
     "Pmqtt": "Pmqtt",
+    "VictronGx": "VictronGx",
     "NotDef": "NotDef",
     "BalansunPeer": "BalansunPeer",
 }

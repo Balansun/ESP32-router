@@ -49,7 +49,15 @@ const char *balansun_source_logic_wire_for_id(SourceId id) {
 }
 
 bool balansun_source_logic_meter_uart_pins_active(SourceId id) {
-  return id == SourceId::JsyMk194 || id == SourceId::JsyMk333 || id == SourceId::Linky;
+  if (id == SourceId::JsyMk194 || id == SourceId::JsyMk333 || id == SourceId::Linky) {
+    return true;
+  }
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+  if (id == SourceId::VictronGx) {
+    return true;
+  }
+#endif
+  return false;
 }
 
 bool balansun_source_logic_meter_analog_pins_active(SourceId id) { return id == SourceId::Analog; }
@@ -71,7 +79,15 @@ bool balansun_source_logic_pin_field_allowed(const char *key, SourceId eff) {
 }
 
 bool balansun_source_logic_cap_mqtt_triac_channel_block_for(SourceId id) {
-  return id == SourceId::JsyMk194 || id == SourceId::JsyMk333 || id == SourceId::ShellyEm;
+  if (id == SourceId::JsyMk194 || id == SourceId::JsyMk333 || id == SourceId::ShellyEm) {
+    return true;
+  }
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+  if (id == SourceId::VictronGx) {
+    return true;
+  }
+#endif
+  return false;
 }
 
 bool balansun_source_logic_second_channel_snapshot_visible(float voltage_v, int active_import_w,
@@ -108,6 +124,7 @@ uint16_t balansun_source_logic_base_poll_period_ms(SourceId id, uint32_t jsy_mk3
       return 800;
     case SourceId::Pmqtt:
     case SourceId::NotDef:
+    case SourceId::VictronGx:
       return 600;
     default:
       return 1000;

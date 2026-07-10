@@ -524,13 +524,21 @@ export function mountHome(ctx: RouteCtx): () => void {
           [kImport, kExport, kApparentImp, kEnergyImp, kEnergyExp].forEach((k) =>
             k.setStale(false),
           );
-          if (hasTriac() && m.second && m.second.energy_total_import_wh > 0) {
+          const secondLive =
+            !!m.second &&
+            (m.second.energy_total_import_wh > 0 ||
+              m.second.energy_total_export_wh > 0 ||
+              m.second.active_import_w !== 0 ||
+              m.second.active_export_w !== 0 ||
+              (m.raw_meter?.voltage_second_v ?? 0) > 0 ||
+              (m.raw_meter?.current_second_a ?? 0) > 0);
+          if (hasTriac() && secondLive) {
             secondaryCard.hidden = false;
             sk1.setValue(
               fmtPowerW(m.second.active_import_w - m.second.active_export_w),
             );
             sk2.setValue(fmtPowerW(m.second.apparent_import_va));
-            const e2 = fmtEnergyWh(m.second.energy_day_import_wh);
+            const e2 = fmtEnergyWh(m.second.energy_day_export_wh);
             sk3.setValue(e2.value, e2.unit);
           } else {
             secondaryCard.hidden = true;

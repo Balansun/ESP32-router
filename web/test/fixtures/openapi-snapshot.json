@@ -3410,6 +3410,32 @@
           "jsy_mk333_serial_baud": {
             "type": "integer"
           },
+          "victron_broker_ip": {
+            "type": "string",
+            "description": "Cerbo GX MQTT broker IPv4 (distinct from mqtt_ip / Home Assistant)."
+          },
+          "victron_portal_id": {
+            "type": "string",
+            "maxLength": 16
+          },
+          "victron_battery_device_id": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "victron_surplus_mode": {
+            "type": "string",
+            "enum": [
+              "battery_charge",
+              "grid_export",
+              "combined_max"
+            ]
+          },
+          "victron_grid_phases": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
           "install_country": {
             "type": "string"
           },

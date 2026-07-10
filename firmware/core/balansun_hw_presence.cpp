@@ -70,10 +70,16 @@ bool zc_expected() {
 bool jsy_source_active() {
 #if BALANSUN_ENABLE_SOURCE_JSY_MK194
   const SourceId eff = balansun_effective_meter_id();
-  return eff == SourceId::JsyMk194;
-#else
-  return false;
+  if (eff == SourceId::JsyMk194) {
+    return true;
+  }
+#if BALANSUN_ENABLE_SOURCE_VictronGx
+  if (balansun_active_source_get() == SourceId::VictronGx) {
+    return true;
+  }
 #endif
+#endif
+  return false;
 }
 
 void sample_zero_cross_window() {

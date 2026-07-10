@@ -93,6 +93,15 @@
       "env_meter": "pmqtt_meter"
     },
     {
+      "id": "victron_gx",
+      "pack_macro": "BALANSUN_METER_PACK_VictronGx",
+      "wire": "VictronGx",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_VictronGx",
+      "env_router": "victron_gx_router",
+      "env_full_router": "victron_gx_full_router",
+      "env_meter": "victron_gx_meter"
+    },
+    {
       "id": "balansun_peer",
       "pack_macro": "BALANSUN_METER_PACK_BALANSUN_PEER",
       "wire": "BalansunPeer",

@@ -33,6 +33,9 @@ const char *balansun_meter_pack_id_wire(void) {
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_PMqtt
   return "pmqtt";
 #endif
+#if BALANSUN_METER_PACK == BALANSUN_METER_PACK_VictronGx
+  return "victron_gx";
+#endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_BALANSUN_PEER
   return "balansun_peer";
 #endif
@@ -69,6 +72,9 @@ const char *balansun_meter_pack_default_wire(void) {
 #endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_PMqtt
   return "Pmqtt";
+#endif
+#if BALANSUN_METER_PACK == BALANSUN_METER_PACK_VictronGx
+  return "VictronGx";
 #endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_BALANSUN_PEER
   return "BalansunPeer";
@@ -114,6 +120,9 @@ const char *balansun_product_profile_wire_compile_time(void) {
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_PMqtt
   return "pmqtt_router";
 #endif
+#if BALANSUN_METER_PACK == BALANSUN_METER_PACK_VictronGx
+  return "victron_gx_router";
+#endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_BALANSUN_PEER
   return "balansun_peer_router";
 #endif
@@ -148,6 +157,9 @@ const char *balansun_product_profile_wire_compile_time(void) {
 #endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_PMqtt
   return "pmqtt_meter";
+#endif
+#if BALANSUN_METER_PACK == BALANSUN_METER_PACK_VictronGx
+  return "victron_gx_meter";
 #endif
 #if BALANSUN_METER_PACK == BALANSUN_METER_PACK_BALANSUN_PEER
   return "balansun_peer_meter";

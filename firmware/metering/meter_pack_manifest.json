@@ -241,6 +241,34 @@
       "config_fields": ["pmqtt_topic", "pmqtt_schema", "pmqtt_bindings"]
     },
     {
+      "id": "victron_gx",
+      "wire": "VictronGx",
+      "source_id": "VictronGx",
+      "enable_macro": "BALANSUN_ENABLE_SOURCE_VictronGx",
+      "pack_macro": "BALANSUN_METER_PACK_VictronGx",
+      "driver": "victron_gx_meter.cpp",
+      "driver_class": "VictronGxMeter",
+      "driver_base": "EventDrivenMeter",
+      "driver_header": "victron_gx_meter.h",
+      "instance_fn": "balansun_meter_instance_victron_gx",
+      "poll_period_ms": 600,
+      "registry_flags": ["touch_last_ms"],
+      "logic": ["victron_gx_logic.cpp"],
+      "sidecars": ["victron_gx_mqtt.cpp"],
+      "transport": "mqtt",
+      "connection_kind": "mqtt",
+      "spa_visible": true,
+      "pinout_anchor": "17-sources-de-mesure--schémas-électrique-et-électronique",
+      "meter_gpio": [],
+      "config_fields": [
+        "victron_broker_ip",
+        "victron_portal_id",
+        "victron_battery_device_id",
+        "victron_surplus_mode",
+        "victron_grid_phases"
+      ]
+    },
+    {
       "id": "balansun_peer",
       "wire": "BalansunPeer",
       "source_id": "BalansunPeer",

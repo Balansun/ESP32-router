@@ -25,6 +25,9 @@ static bool balansun_source_meter_payload_ready(void) {
     }
     return LastPwMQTTMillis > 0;
   }
+  if (id == SourceId::VictronGx) {
+    return LastVictronMqttMillis > 0;
+  }
   if (id == SourceId::BalansunPeer) {
     return ext_peer_last_poll_ok;
   }

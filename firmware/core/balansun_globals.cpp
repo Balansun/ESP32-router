@@ -99,6 +99,11 @@ long EAS_T_J0 = 0;
 long EAI_T_J0 = 0;
 long EAS_M_J0 = 0;
 long EAI_M_J0 = 0;
+long g_day_floor_house_import_wh = 0;
+long g_day_floor_house_export_wh = 0;
+long g_day_floor_second_import_wh = 0;
+long g_day_floor_second_export_wh = 0;
+bool g_second_channel_meter_valid_this_boot = false;
 
 int adr_debut_para = 0;
 
@@ -175,6 +180,13 @@ BalansunPsramStr<BALANSUN_MQTT_BINDINGS_JSON_MAX> PmqttBindingsJson;
 float PwMQTT_last = 0;
 unsigned long LastPwMQTTMillis = 0;
 uint32_t JsyMk333SerialBaud = 9600;
+
+unsigned long victron_broker_ip = 0;
+BalansunStr<BALANSUN_VICTRON_PORTAL_ID_MAX> VictronPortalId;
+uint16_t victron_battery_device_id = 0;
+BalansunStr<BALANSUN_VICTRON_SURPLUS_MODE_MAX> VictronSurplusModeWire("battery_charge");
+uint8_t victron_grid_phases = 1;
+unsigned long LastVictronMqttMillis = 0;
 
 Action load_channels[kMaxRoutingActions];
 int NbActions = 0;

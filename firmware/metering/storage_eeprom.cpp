@@ -14,11 +14,19 @@
 #include "api_access_token.h"
 #include "balansun_history_limits.h"
 #include "balansun_meter_pack.h"
+#include "balansun_meter_sources_enable.h"
 #include "balansun_source_logic.h"
 #include "balansun_temperature.h"
 #include "balansun_device_id.h"
 #include "balansun_pin_map.h"
+#include "intraday_day_nvs.h"
+#include "balansun_daily_energy_logic.h"
 #include "balansun_source.h"
+#include "balansun_source_types.h"
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+#include "jsy_mk194t_meter.h"
+#include "victron_gx_logic.h"
+#endif
 #include "Actions.h"
 #include <balansun/load_profile.h>
 #include <EEPROM.h>
@@ -240,6 +248,19 @@ static void extension_fields_to_globals(const EepromExtensionFields &f) {
   PmqttBindingsJson.assign(f.pmqttBindingsJson.c_str());
   if (PmqttBindingsJson.empty()) PmqttBindingsJson = "[]";
   JsyMk333SerialBaud = f.jsyMk333SerialBaud;
+  if (f.victronGxPersistPresent) {
+    victron_broker_ip = f.victronBrokerIp;
+    VictronPortalId.assign(f.victronPortalId.c_str());
+    victron_battery_device_id = f.victronBatteryDeviceId;
+    VictronSurplusMode mode = VictronSurplusMode::BatteryCharge;
+    if (f.victronSurplusMode == 1) {
+      mode = VictronSurplusMode::GridExport;
+    } else if (f.victronSurplusMode == 2) {
+      mode = VictronSurplusMode::CombinedMax;
+    }
+    VictronSurplusModeWire = balansun_victron_surplus_mode_wire(mode);
+    victron_grid_phases = f.victronGridPhases < 1 ? 1 : f.victronGridPhases;
+  }
   ext_peer_port = f.ext_peer_port;
   ext_peer_path.assign(f.ext_peer_path.c_str());
   if (ext_peer_path.empty()) {
@@ -326,6 +347,16 @@ static EepromExtensionFields extension_fields_from_globals() {
   f.pmqttSchema = std::string(PmqttSchema.c_str());
   f.pmqttBindingsJson = std::string(PmqttBindingsJson.c_str());
   f.jsyMk333SerialBaud = JsyMk333SerialBaud;
+  f.victronGxPersistPresent = true;
+  f.victronBrokerIp = static_cast<uint32_t>(victron_broker_ip);
+  f.victronPortalId = std::string(VictronPortalId.c_str());
+  f.victronBatteryDeviceId = victron_battery_device_id;
+  {
+    VictronSurplusMode mode = VictronSurplusMode::BatteryCharge;
+    balansun_victron_surplus_mode_from_wire(VictronSurplusModeWire.c_str(), mode);
+    f.victronSurplusMode = static_cast<uint8_t>(mode);
+  }
+  f.victronGridPhases = victron_grid_phases < 1 ? 1 : victron_grid_phases;
   f.ext_peer_port = static_cast<uint16_t>(ext_peer_port);
   f.ext_peer_path = std::string(ext_peer_path.c_str());
   f.ext_peer_protocol_mode = 1;
@@ -557,6 +588,7 @@ void eepromClearConsumptionHistory() {
   EEPROM.writeString(adr_currentDateStr, "");
   EEPROM.writeUShort(adr_lastStockConso, 0);
   balansun_eeprom_commit();
+  intraday_day_nvs_clear();
   currentDateStr.clear();
   idxPromDuJour = 0;
   if (history_use_nvs()) {
@@ -575,18 +607,22 @@ void eepromLoadMorningDayEnergy(void) {
   idxPromDuJour = EEPROM.readUShort(adr_lastStockConso);
   const int cap = history_days_capacity();
   if (cap > 0) idxPromDuJour = (idxPromDuJour + cap) % cap;
-  if (second_energy_import_wh<EAS_T_J0){
-    second_energy_import_wh=EAS_T_J0;
+  long restored_h1i = 0;
+  long restored_h1e = 0;
+  long restored_ch2i = 0;
+  long restored_ch2e = 0;
+  if (intraday_day_nvs_load(currentDateStr.c_str(), &restored_h1i, &restored_h1e, &restored_ch2i,
+                            &restored_ch2e)) {
+    g_day_floor_house_import_wh = restored_h1i;
+    g_day_floor_house_export_wh = restored_h1e;
+    g_day_floor_second_import_wh = restored_ch2i;
+    g_day_floor_second_export_wh = restored_ch2e;
+    house_day_energy_import_wh = restored_h1i;
+    house_day_energy_export_wh = restored_h1e;
+    second_day_energy_import_wh = restored_ch2i;
+    second_day_energy_export_wh = restored_ch2e;
   }
-  if (second_energy_export_wh<EAI_T_J0){
-    second_energy_export_wh=EAI_T_J0;
-  }
-  if (house_energy_import_wh<EAS_M_J0){
-    house_energy_import_wh=EAS_M_J0;
-  }
-  if (house_energy_export_wh<EAI_M_J0){
-    house_energy_export_wh=EAI_M_J0;
-  }
+  // ponytail: do not bump cumulative to J0 before first meter read — zeros day export at boot.
 }
 
 
@@ -609,6 +645,13 @@ void balansun_on_clock_tick() {
     wall_clock_decihours = hour * 100 + minute * 10 / 6;
     if (!currentDateStr.equals(dayBuf)) {  // Midnight rollover
       if (meter_reading_valid && !currentDateStr.empty()) {      // Valid energy data received
+        bool ch2_fresh = true;
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+        if (balansun_active_source_get() == SourceId::VictronGx) {
+          ch2_fresh = jsy_mk194t_poll_triac_channel();
+        }
+#endif
+        if (ch2_fresh) {
         const int cap = history_days_capacity();
         idxPromDuJour = (idxPromDuJour + 1 + cap) % cap;
         // Persist complete CH1/CH2 day metrics in ring slot.
@@ -627,6 +670,9 @@ void balansun_on_clock_tick() {
         EEPROM.writeUShort(adr_lastStockConso, idxPromDuJour);
         balansun_eeprom_commit();
         eepromLoadMorningDayEnergy();
+        balansun_daily_energy_reset_day_floors();
+        intraday_day_nvs_clear();
+        }
       }
       currentDateStr.assign(dayBuf);
     }

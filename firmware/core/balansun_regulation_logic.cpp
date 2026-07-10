@@ -80,9 +80,7 @@ ActionRegulationOutput balansun_regulation_compute_action(const ActionRegulation
       if (triac_delay_percent_f < 100.0f - max_triac_pw) {
         triac_delay_percent_f = 100.0f - max_triac_pw;
       }
-      if (!in.itmode_ok && i == 0) {
-        triac_delay_percent_f = 100.0f;
-      }
+      // ponytail: zero-cross loss should warn in health diagnostics, not force triac OFF.
     }
 
     triac_delay_percent_f = constrain_f(triac_delay_percent_f, 0.0f, 100.0f);

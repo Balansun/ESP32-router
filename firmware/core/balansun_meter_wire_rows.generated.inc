@@ -29,6 +29,9 @@
 #if BALANSUN_ENABLE_SOURCE_PMqtt
     {SourceId::Pmqtt, "Pmqtt"},
 #endif
+#if BALANSUN_ENABLE_SOURCE_VictronGx
+    {SourceId::VictronGx, "VictronGx"},
+#endif
 #if BALANSUN_ENABLE_SOURCE_EXT
     {SourceId::BalansunPeer, "BalansunPeer"},
 #endif

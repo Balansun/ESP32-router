@@ -10,6 +10,7 @@
 #include "balansun_regulation_logic.h"
 #include "balansun_vacation_logic.h"
 #include "balansun_source_health_logic.h"
+#include "balansun_daily_energy_logic.h"
 #include "balansun_action_cap_logic.h"
 #include "balansun_site_cap_logic.h"
 #include "balansun_regulation_modes.h"
@@ -67,8 +68,10 @@ void balansun_apply_surplus_regulation(void) {
   for (int i = 0; i < NbActions; i++) {
     ActionCapInput capIn;
     capIn.daily_cap_wh = actionDailyCapWh[i];
-    capIn.routed_wh_today = (i == 0) ? static_cast<uint32_t>(second_day_energy_export_wh > 0 ? second_day_energy_export_wh : 0)
-                                     : 0;
+    capIn.routed_wh_today =
+        (i == 0) ? static_cast<uint32_t>(balansun_routed_day_energy_wh(second_day_energy_import_wh,
+                                                                        second_day_energy_export_wh))
+                 : 0;
     actionCapHit[i] = balansun_action_cap_logic_is_hit(capIn);
   }
 

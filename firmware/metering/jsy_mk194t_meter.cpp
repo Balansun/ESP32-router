@@ -54,7 +54,38 @@ static bool jsy_mk194t_uart_ready(void) {
 #endif
 }
 
-bool JsyMk194Meter::pollTransport() {
+static void apply_jsy_reading(const JsyMk194Reading &rd, bool apply_house) {
+  Sens_1 = rd.sens_1;
+  Sens_2 = rd.sens_2;
+  second_voltage_v = rd.voltage_second_v;
+  second_current_a = rd.current_second_a;
+  second_energy_import_wh = rd.energy_import_wh;
+  second_power_factor = rd.pf_second;
+  second_energy_export_wh = rd.energy_export_wh;
+  mains_frequency_hz = rd.frequence_hz;
+  second_active_import_w = rd.second_active_import_w;
+  second_active_export_w = rd.second_active_export_w;
+  second_apparent_import_va = rd.pva_t;
+  second_apparent_export_va = (rd.sens_1 > 0) ? rd.pva_t : 0;
+  if (apply_house) {
+    house_voltage_v = rd.voltage_house_v;
+    house_current_a = rd.current_house_a;
+    house_energy_import_wh = rd.house_energy_import_wh_wh;
+    house_power_factor = rd.pf_house;
+    house_energy_export_wh = rd.house_energy_export_wh_wh;
+    house_active_import_w = rd.house_active_import_w;
+    house_active_export_w = rd.house_active_export_w;
+    house_apparent_import_va = rd.pva_m;
+    house_apparent_export_va = (rd.sens_2 > 0) ? rd.pva_m : 0;
+  }
+  meter_reading_valid = true;
+  esp_task_wdt_reset();
+  if (cptLEDyellow > 30) {
+    cptLEDyellow = 4;
+  }
+}
+
+static bool jsy_mk194t_poll_modbus(bool apply_house) {
   if (millis() < 5000UL) {
     balansun_hw_presence_on_jsy_poll(false, false);
     return false;
@@ -84,37 +115,19 @@ bool JsyMk194Meter::pollTransport() {
     JsyMk194Reading rd;
     if (jsy_mk194_parse_modbus_frame(ByteArray, a, rd)) {
       frame_ok = true;
-      Sens_1 = rd.sens_1;
-      Sens_2 = rd.sens_2;
-      second_voltage_v = rd.voltage_second_v;
-      second_current_a = rd.current_second_a;
-      second_energy_import_wh = rd.energy_import_wh;
-      second_power_factor = rd.pf_second;
-      second_energy_export_wh = rd.energy_export_wh;
-      mains_frequency_hz = rd.frequence_hz;
-      second_active_import_w = rd.second_active_import_w;
-      second_active_export_w = rd.second_active_export_w;
-      second_apparent_import_va = rd.pva_t;
-      second_apparent_export_va = (rd.sens_1 > 0) ? rd.pva_t : 0;
-      house_voltage_v = rd.voltage_house_v;
-      house_current_a = rd.current_house_a;
-      house_energy_import_wh = rd.house_energy_import_wh_wh;
-      house_power_factor = rd.pf_house;
-      house_energy_export_wh = rd.house_energy_export_wh_wh;
-      house_active_import_w = rd.house_active_import_w;
-      house_active_export_w = rd.house_active_export_w;
-      house_apparent_import_va = rd.pva_m;
-      house_apparent_export_va = (rd.sens_2 > 0) ? rd.pva_m : 0;
-      meter_reading_valid = true;
-      esp_task_wdt_reset();
-      if (cptLEDyellow > 30) {
-        cptLEDyellow = 4;
-      }
+      apply_jsy_reading(rd, apply_house);
     }
   }
   balansun_hw_presence_on_jsy_poll(true, frame_ok);
+  if (frame_ok) {
+    g_second_channel_meter_valid_this_boot = true;
+  }
   return frame_ok;
 }
+
+bool JsyMk194Meter::pollTransport() { return jsy_mk194t_poll_modbus(true); }
+
+bool JsyMk194Meter::pollTriacChannelOnly() { return jsy_mk194t_poll_modbus(false); }
 
 void JsyMk194Meter::appendDiagnostics(JsonObject doc, int linky_tail_max) {
   (void)linky_tail_max;
@@ -129,5 +142,9 @@ IMeterDriver *balansun_meter_instance_jsy_mk194() {
 void jsy_mk194t_setup(void) { balansun_meter_instance_jsy_mk194()->setup(); }
 
 void jsy_mk194t_poll(void) { balansun_meter_instance_jsy_mk194()->poll(); }
+
+bool jsy_mk194t_poll_triac_channel(void) {
+  return static_cast<JsyMk194Meter *>(balansun_meter_instance_jsy_mk194())->pollTriacChannelOnly();
+}
 
 #endif /* BALANSUN_ENABLE_SOURCE_JSY_MK194 */

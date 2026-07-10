@@ -8,14 +8,19 @@
 #include "balansun_source_logic.h"
 #include "balansun_source_health_logic.h"
 #include "balansun_diag.h"
+#include "balansun_app.h"
 #include "balansun_forward.h"
 #include "balansun_globals.h"
 #include "balansun_mains_profile.h"
+#include "balansun_pub.h"
 #include "api_util.h"
 #include <ArduinoJson.h>
 
 #if BALANSUN_ENABLE_SOURCE_JSY_MK333
 #include "jsy_mk333_meter.h"
+#endif
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+#include "../metering/jsy_mk194t_meter.h"
 #endif
 
 static SourceId g_active_source = SourceId::Unknown;
@@ -71,6 +76,13 @@ void balansun_source_run_poll_cycle(unsigned long pollBackoffMs) {
     return;
   }
   row->poll();
+#if BALANSUN_ENABLE_SOURCE_JSY_MK194 && BALANSUN_ENABLE_SOURCE_VictronGx
+  // ponytail: VictronGx drives house surplus; local JSY still meters triac CH2.
+  if (g_active_source == SourceId::VictronGx && jsy_mk194t_poll_triac_channel()) {
+    balansun_daily_energy_tick();
+    BalansunPublishFromGlobals();
+  }
+#endif
   if (row->flags() & BALANSUN_METER_RSF_TOUCH_LAST_MS) {
     last_metering_task_ms = millis();
   }
@@ -202,6 +214,7 @@ void balansun_sources_brute_panel_json(String &out) {
   p["homewizard"] = (eff == SourceId::HomeW);
   p["shelly_pro"] = (eff == SourceId::ShellyPro);
   p["pmqtt"] = (eff == SourceId::Pmqtt);
+  p["victron_gx"] = (eff == SourceId::VictronGx);
   p["notdef"] = (eff == SourceId::NotDef);
   serializeJson(d, out);
 }

@@ -27,6 +27,8 @@
 #include "balansun_regulation_state.h"
 #include "tempo_rte_logic.h"
 #include "balansun_forward.h"
+#include "balansun_daily_energy_logic.h"
+#include "metering/intraday_day_nvs.h"
 #include "balansun_triac_isr.h"
 #include "balansun_pub.h"
 #include "balansun_reboot.h"
@@ -37,6 +39,7 @@
 #include "balansun_source.h"
 #include "balansun_source_logic.h"
 #include "metering/pmqtt_bindings.h"
+#include "metering/victron_gx_mqtt.h"
 #include "balansun_measurement.h"
 #include "app_wifi_setup.h"
 #include "captive_dns.h"
@@ -252,6 +255,9 @@ void balansun_loop(void) {
   if (balansun_active_source_get() == SourceId::Pmqtt) {
     pmqtt_mqtt_service_tick();
   }
+  if (balansun_active_source_get() == SourceId::VictronGx) {
+    victron_gx_mqtt_service_tick();
+  }
 
   if (tps - previousHistoryMillis >= 300000) {
     previousHistoryMillis = tps;
@@ -277,6 +283,8 @@ void balansun_loop(void) {
       tabPva_Triac_2s[IdxStock2s] = second_apparent_import_va - second_apparent_export_va;
       balansun_on_clock_tick();
       balansun_daily_energy_tick();
+      // ponytail: keep HTTP snapshot coherent with MQTT payload after day-energy tick.
+      BalansunPublishFromGlobals();
     }
     tabTemperature_2s[IdxStock2s] = balansun_history_temperature_sample(temperature);
     if (meter_reading_valid || temperature > -100) {
@@ -408,41 +416,51 @@ void balansun_init_action_gpios(void) {
   }
 }
 
+void balansun_daily_energy_reset_day_floors(void) {
+  g_day_floor_house_import_wh = 0;
+  g_day_floor_house_export_wh = 0;
+  g_day_floor_second_import_wh = 0;
+  g_day_floor_second_export_wh = 0;
+}
+
 void balansun_daily_energy_tick(void) {
   if (!time_sync_valid) return;
   const bool pmqttDayFromBroker =
       balansun_active_source_get() == SourceId::Pmqtt && pmqtt_bindings_provides_day_energy();
+  const bool defer_ch2_tick =
+      balansun_active_source_get() == SourceId::VictronGx && !g_second_channel_meter_valid_this_boot;
   if (!pmqttDayFromBroker) {
-    if (house_energy_import_wh < EAS_M_J0 || EAS_M_J0 == 0) {
-      EAS_M_J0 = house_energy_import_wh;
+    house_day_energy_import_wh = balansun_daily_energy_wh(static_cast<long>(house_energy_import_wh),
+                                                          EAS_M_J0,
+                                                          g_day_floor_house_import_wh);
+    house_day_energy_export_wh = balansun_daily_energy_wh(static_cast<long>(house_energy_export_wh),
+                                                          EAI_M_J0,
+                                                          g_day_floor_house_export_wh);
+    if (!defer_ch2_tick) {
+      second_day_energy_import_wh = balansun_daily_energy_wh(static_cast<long>(second_energy_import_wh),
+                                                             EAS_T_J0,
+                                                             g_day_floor_second_import_wh);
+      second_day_energy_export_wh = balansun_daily_energy_wh(static_cast<long>(second_energy_export_wh),
+                                                             EAI_T_J0,
+                                                             g_day_floor_second_export_wh);
     }
-    house_day_energy_import_wh = house_energy_import_wh - EAS_M_J0;
-    if (house_energy_export_wh < EAI_M_J0 || EAI_M_J0 == 0) {
-      EAI_M_J0 = house_energy_export_wh;
+    if (!currentDateStr.empty()) {
+      intraday_day_nvs_maybe_save(currentDateStr.c_str(),
+                                  static_cast<long>(house_day_energy_import_wh),
+                                  static_cast<long>(house_day_energy_export_wh),
+                                  static_cast<long>(second_day_energy_import_wh),
+                                  static_cast<long>(second_day_energy_export_wh));
     }
-    house_day_energy_export_wh = house_energy_export_wh - EAI_M_J0;
-    if (second_energy_import_wh < EAS_T_J0 || EAS_T_J0 == 0) {
-      EAS_T_J0 = second_energy_import_wh;
-    }
-    second_day_energy_import_wh = second_energy_import_wh - EAS_T_J0;
-    if (second_energy_export_wh < EAI_T_J0 || EAI_T_J0 == 0) {
-      EAI_T_J0 = second_energy_export_wh;
-    }
-    second_day_energy_export_wh = second_energy_export_wh - EAI_T_J0;
     return;
   }
   /* Pmqtt: day energies come from MQTT bindings; still track J0 anchors from cumulative totals. */
-  if (house_energy_import_wh < EAS_M_J0 || EAS_M_J0 == 0) {
-    EAS_M_J0 = house_energy_import_wh;
-  }
-  if (house_energy_export_wh < EAI_M_J0 || EAI_M_J0 == 0) {
-    EAI_M_J0 = house_energy_export_wh;
-  }
-  if (second_energy_import_wh < EAS_T_J0 || EAS_T_J0 == 0) {
-    EAS_T_J0 = second_energy_import_wh;
-  }
-  if (second_energy_export_wh < EAI_T_J0 || EAI_T_J0 == 0) {
-    EAI_T_J0 = second_energy_export_wh;
+  (void)balansun_daily_energy_wh(static_cast<long>(house_energy_import_wh), EAS_M_J0, g_day_floor_house_import_wh);
+  (void)balansun_daily_energy_wh(static_cast<long>(house_energy_export_wh), EAI_M_J0, g_day_floor_house_export_wh);
+  if (!defer_ch2_tick) {
+    (void)balansun_daily_energy_wh(static_cast<long>(second_energy_import_wh), EAS_T_J0,
+                                   g_day_floor_second_import_wh);
+    (void)balansun_daily_energy_wh(static_cast<long>(second_energy_export_wh), EAI_T_J0,
+                                   g_day_floor_second_export_wh);
   }
 }
 

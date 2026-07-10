@@ -107,6 +107,7 @@ static String mqttHaMetricFriendlyName(const String &key) {
   if (key == "second_energy_export_wh") return secondLabel + " energy export";
   if (key == "second_day_energy_import_wh") return secondLabel + " day energy import";
   if (key == "second_day_energy_export_wh") return secondLabel + " day energy export";
+  if (key == "second_routed_day_energy_wh") return secondLabel + " routed today";
   if (key == "mains_frequency_hz") return String("Mains frequency");
   if (key == "temperature_c") return String("Temperature");
   return String(MQTTdeviceName) + " " + key;
@@ -129,8 +130,9 @@ void sendMQTTDiscoveryMsg_global() {
     DeviceToDiscover("second_power_factor", "", "power_factor", "2");
     DeviceToDiscover("second_energy_import_wh", "Wh", "energy", "0");
     DeviceToDiscover("second_energy_export_wh", "Wh", "energy", "0");
-    DeviceToDiscover("second_day_energy_import_wh", "Wh", "energy", "0");
-    DeviceToDiscover("second_day_energy_export_wh", "Wh", "energy", "0");
+    DeviceToDiscover("second_day_energy_import_wh", "Wh", "energy", "0", false);
+    DeviceToDiscover("second_day_energy_export_wh", "Wh", "energy", "0", false);
+    DeviceToDiscover("second_routed_day_energy_wh", "Wh", "energy", "0", false);
     DevicePastDayWhToDiscover("second_yesterday_energy_import_wh");
     DevicePastDayWhToDiscover("second_yesterday_energy_export_wh");
     DeviceToDiscover("mains_frequency_hz", "Hz", "frequency", "2");
@@ -164,8 +166,8 @@ void sendMQTTDiscoveryMsg_global() {
   DeviceToDiscover("house_power_factor", "", "power_factor", "2");
   DeviceToDiscover("house_energy_import_wh", "Wh", "energy", "0");
   DeviceToDiscover("house_energy_export_wh", "Wh", "energy", "0");
-  DeviceToDiscover("house_day_energy_import_wh", "Wh", "energy", "0");
-  DeviceToDiscover("house_day_energy_export_wh", "Wh", "energy", "0");
+  DeviceToDiscover("house_day_energy_import_wh", "Wh", "energy", "0", false);
+  DeviceToDiscover("house_day_energy_export_wh", "Wh", "energy", "0", false);
   DevicePastDayWhToDiscover("house_yesterday_energy_import_wh");
   DevicePastDayWhToDiscover("house_yesterday_energy_export_wh");
 
@@ -229,7 +231,6 @@ void DeviceToDiscover(String Name, String Unit, String Class, String Round, bool
   }
   if (Unit=="Wh"){
       doc["state_class"] = whTotalIncreasing ? "total_increasing" : "measurement";
-      if (whTotalIncreasing) doc["last_reset"] = mqttIsoNow();
   }
   doc["device_class"] = Class;
   doc["val_tpl"] = "{{ value_json." + Name + "|default(0)| round(" + Round + ") }}";

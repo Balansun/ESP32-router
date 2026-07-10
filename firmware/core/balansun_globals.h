@@ -129,6 +129,13 @@ extern long EAS_T_J0;
 extern long EAI_T_J0;
 extern long EAS_M_J0;
 extern long EAI_M_J0;
+/** Same-calendar-day floors — prevent day counters stepping backward after OTA. */
+extern long g_day_floor_house_import_wh;
+extern long g_day_floor_house_export_wh;
+extern long g_day_floor_second_import_wh;
+extern long g_day_floor_second_export_wh;
+/** VictronGx: true after first successful JSY CH2 poll this boot. */
+extern bool g_second_channel_meter_valid_this_boot;
 
 extern int adr_debut_para;
 
@@ -217,6 +224,14 @@ extern BalansunPsramStr<BALANSUN_MQTT_BINDINGS_JSON_MAX> PmqttBindingsJson;
 extern float PwMQTT_last;
 extern unsigned long LastPwMQTTMillis;
 extern uint32_t JsyMk333SerialBaud;
+
+// --- Source Victron Cerbo GX (2nd MQTT client to Cerbo broker) ---
+extern unsigned long victron_broker_ip;
+extern BalansunStr<BALANSUN_VICTRON_PORTAL_ID_MAX> VictronPortalId;
+extern uint16_t victron_battery_device_id;
+extern BalansunStr<BALANSUN_VICTRON_SURPLUS_MODE_MAX> VictronSurplusModeWire;
+extern uint8_t victron_grid_phases;
+extern unsigned long LastVictronMqttMillis;
 
 // --- Routing actions (index 0 = triac channel in regulation) ---
 extern Action load_channels[kMaxRoutingActions];

@@ -81,6 +81,8 @@ void handle_patch_config() {
                            "mqtt_device_name", "router_name",                            "probe_second_name", "probe_house_name",
                            "temperature_label", "temp_gpio", "temperature_slots", "calib_u", "calib_i", "pmqtt_topic", "pmqtt_schema",
                            "pmqtt_bindings",
+                           "victron_broker_ip", "victron_portal_id", "victron_battery_device_id",
+                           "victron_surplus_mode", "victron_grid_phases",
                            "jsy_mk333_serial_baud", "install_country", "install_country_variant", "mains_nominal_v",
                            "mains_frequency_mode", "mains_frequency_hz_manual", "triac_override_max_temp_c",
                            "http_cors_enabled", "pwm_gpio", "pwm_mode", "pwm_duty_percent", "pwm_inverted",

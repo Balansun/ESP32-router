@@ -2,7 +2,7 @@
 
 #include "balansun_source_logic.h"
 
-TEST(BalansunSourceLogic, RegistryCount) { EXPECT_EQ(balansun_source_logic_registry_count(), 12u); }
+TEST(BalansunSourceLogic, RegistryCount) { EXPECT_EQ(balansun_source_logic_registry_count(), 13u); }
 
 TEST(BalansunSourceLogic, ParseKnownWires) {
   EXPECT_EQ(balansun_source_logic_parse_wire("JsyMk194"), SourceId::JsyMk194);

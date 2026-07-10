@@ -33,6 +33,9 @@
 #if BALANSUN_ENABLE_SOURCE_PMqtt
 #include "../metering/pmqtt_meter.h"
 #endif
+#if BALANSUN_ENABLE_SOURCE_VictronGx
+#include "../metering/victron_gx_meter.h"
+#endif
 #if BALANSUN_ENABLE_SOURCE_EXT
 #include "../metering/external_peer_meter.h"
 #endif
@@ -70,6 +73,9 @@ IMeterDriver *const kMeterInstances[] = {
 #endif
 #if BALANSUN_ENABLE_SOURCE_PMqtt
   balansun_meter_instance_pmqtt(),
+#endif
+#if BALANSUN_ENABLE_SOURCE_VictronGx
+  balansun_meter_instance_victron_gx(),
 #endif
 #if BALANSUN_ENABLE_SOURCE_EXT
   balansun_meter_instance_balansun_peer(),

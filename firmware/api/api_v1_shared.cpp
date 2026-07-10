@@ -3,12 +3,15 @@
  */
 #include "api_v1_common.h"
 #include "balansun_ha_state_payload.h"
+#include "balansun_daily_energy_logic.h"
 #include "balansun_regulation_logic.h"
 #include "balansun_regulation_state.h"
 #include "balansun_config_daily_cap_logic.h"
 #include "balansun_diag.h"
 #include "balansun_triac_calibration_logic.h"
 #include "metering/pmqtt_bindings.h"
+#include "metering/victron_gx_mqtt.h"
+#include "victron_gx_logic.h"
 #include "balansun_temperature.h"
 #include "balansun_product_caps.h"
 #include "balansun_config_cap_logic.h"
@@ -82,6 +85,11 @@ void api_append_config_object(JsonObject o) {
   o["calib_i"] = CalibI;
   o["pmqtt_topic"] = PmqttTopic;
   o["pmqtt_schema"] = PmqttSchema;
+  o["victron_broker_ip"] = ip32ToDotted(victron_broker_ip);
+  o["victron_portal_id"] = VictronPortalId.c_str();
+  o["victron_battery_device_id"] = victron_battery_device_id;
+  o["victron_surplus_mode"] = VictronSurplusModeWire.c_str();
+  o["victron_grid_phases"] = victron_grid_phases;
   o["jsy_mk333_serial_baud"] = JsyMk333SerialBaud;
   o["install_country"] = balansun_mains_install_country();
   o["install_country_variant"] = balansun_mains_install_variant();
@@ -189,7 +197,8 @@ bool config_apply_from_json(JsonObject root, bool fullPut, String &err) {
                        "mqtt_repeat_sec", "mqtt_ip", "mqtt_port", "mqtt_user", "mqtt_password", "mqtt_prefix",
                        "mqtt_device_name", "router_name", "probe_second_name", "probe_house_name",
                        "temperature_label", "calib_u", "calib_i", "pmqtt_topic", "pmqtt_schema",
-                       "jsy_mk333_serial_baud",
+                       "victron_broker_ip", "victron_portal_id", "victron_battery_device_id",
+                       "victron_surplus_mode", "victron_grid_phases", "jsy_mk333_serial_baud",
                        "install_country", "install_country_variant", "mains_nominal_v", "mains_frequency_mode",
                        "mains_frequency_hz_manual", "triac_override_max_temp_c", "http_cors_enabled"};
   const int nkeys = sizeof(keys) / sizeof(keys[0]);
@@ -225,6 +234,9 @@ bool config_apply_from_json(JsonObject root, bool fullPut, String &err) {
     }
     Source = next;
     balansun_active_source_refresh_from_global_string();
+    if (balansun_active_source_get() == SourceId::VictronGx && root["triac_off_when_source_stale"].isNull()) {
+      triacOffWhenSourceStale = true;
+    }
   }
   if (!root["ext_peer_ip"].isNull()) {
     if (!applyIp("ext_peer_ip", ext_peer_ip)) return false;
@@ -384,6 +396,41 @@ bool config_apply_from_json(JsonObject root, bool fullPut, String &err) {
     }
   }
   if (!root["jsy_mk333_serial_baud"].isNull()) JsyMk333SerialBaud = (uint32_t)root["jsy_mk333_serial_baud"].as<unsigned long>();
+  if (!applyIp("victron_broker_ip", victron_broker_ip)) return false;
+  if (!root["victron_portal_id"].isNull()) {
+    String pid = root["victron_portal_id"].as<String>();
+    pid.trim();
+    if (pid.length() > 16) {
+      err = "victron_portal_id max 16 chars";
+      return false;
+    }
+    VictronPortalId = pid;
+  }
+  if (!root["victron_battery_device_id"].isNull()) {
+    const int dev = (int)root["victron_battery_device_id"];
+    if (dev < 0 || dev > 65535) {
+      err = "victron_battery_device_id must be 0..65535";
+      return false;
+    }
+    victron_battery_device_id = static_cast<uint16_t>(dev);
+  }
+  if (!root["victron_surplus_mode"].isNull()) {
+    const char *modeWire = root["victron_surplus_mode"];
+    VictronSurplusMode mode = VictronSurplusMode::BatteryCharge;
+    if (!balansun_victron_surplus_mode_from_wire(modeWire, mode)) {
+      err = "victron_surplus_mode must be battery_charge, grid_export, or combined_max";
+      return false;
+    }
+    VictronSurplusModeWire = balansun_victron_surplus_mode_wire(mode);
+  }
+  if (!root["victron_grid_phases"].isNull()) {
+    const int phases = (int)root["victron_grid_phases"];
+    if (phases < 1 || phases > 3) {
+      err = "victron_grid_phases must be 1..3";
+      return false;
+    }
+    victron_grid_phases = static_cast<uint8_t>(phases);
+  }
   if (!root["install_country"].isNull() || !root["install_country_variant"].isNull()) {
     String cc = !root["install_country"].isNull() ? root["install_country"].as<String>()
                                                     : String(balansun_mains_install_country());
@@ -537,6 +584,11 @@ bool config_apply_from_json(JsonObject root, bool fullPut, String &err) {
     }
   }
   if (!balansun_status_led_apply_config_json(root, err)) return false;
+  if (!root["victron_broker_ip"].isNull() || !root["victron_portal_id"].isNull() ||
+      !root["victron_battery_device_id"].isNull() || !root["victron_surplus_mode"].isNull() ||
+      !root["victron_grid_phases"].isNull() || !root["source"].isNull()) {
+    victron_gx_mqtt_reconnect();
+  }
   return true;
 }
 
@@ -644,6 +696,8 @@ void api_append_measurements_object(JsonObject doc) {
   doc["second"]["apparent_export_va"] = r.second_apparent_export_va;
   doc["second"]["energy_day_import_wh"] = r.second_day_energy_import_wh;
   doc["second"]["energy_day_export_wh"] = r.second_day_energy_export_wh;
+  doc["second"]["energy_day_routed_wh"] =
+      balansun_routed_day_energy_wh(r.second_day_energy_import_wh, r.second_day_energy_export_wh);
   doc["second"]["energy_total_import_wh"] = r.second_energy_import_wh;
   doc["second"]["energy_total_export_wh"] = r.second_energy_export_wh;
   JsonObject raw = doc["raw_meter"].to<JsonObject>();

@@ -16,5 +16,6 @@ enum class SourceId : uint8_t {
   HomeW,
   NotDef,
   Pmqtt,
+  VictronGx,
   BalansunPeer,
 };
